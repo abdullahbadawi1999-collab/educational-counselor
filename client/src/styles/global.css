@@ -183,6 +183,35 @@ input, textarea, select {
   .grid-2, .grid-3, .grid-4 {
     grid-template-columns: 1fr;
   }
+
+  /* Sidebar: hidden by default on mobile, shown when .open */
+  .sidebar {
+    transform: translateX(100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Show overlay when sidebar is open */
+  .sidebar-overlay {
+    display: block !important;
+  }
+
+  /* Show close button inside sidebar */
+  .sidebar-close-btn {
+    display: flex !important;
+  }
+
+  /* Show hamburger menu button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Remove sidebar margin from main content */
+  .main-content {
+    margin-right: 0 !important;
+    padding: 70px 16px 24px 16px !important;
+  }
 }
 
 .page-header {

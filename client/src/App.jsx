@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { FiMenu } from 'react-icons/fi'
 import Sidebar from './components/layout/Sidebar'
 import DashboardPage from './pages/DashboardPage'
 import CirclesPage from './pages/CirclesPage'
@@ -10,6 +11,7 @@ import AlertsPage from './pages/AlertsPage'
 
 function App() {
   const [toast, setToast] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -18,8 +20,26 @@ function App() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar />
-      <main style={{
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile hamburger button */}
+      <button
+        className="mobile-menu-btn"
+        onClick={() => setSidebarOpen(true)}
+        style={{
+          position: 'fixed', top: 12, right: 12, zIndex: 90,
+          background: 'var(--primary)', color: 'white', border: 'none',
+          borderRadius: 10, padding: '10px 12px', cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)', display: 'none',
+          alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600,
+          fontFamily: 'inherit'
+        }}
+      >
+        <FiMenu size={20} />
+        <span>القائمة</span>
+      </button>
+
+      <main className="main-content" style={{
         flex: 1,
         marginRight: 'var(--sidebar-width)',
         padding: '24px 32px',

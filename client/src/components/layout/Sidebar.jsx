@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom'
-import { FiHome, FiUsers, FiBookOpen, FiPlusCircle, FiAlertTriangle } from 'react-icons/fi'
+import { NavLink, useLocation } from 'react-router-dom'
+import { FiHome, FiUsers, FiBookOpen, FiPlusCircle, FiAlertTriangle, FiX } from 'react-icons/fi'
 
 const navItems = [
   { path: '/', label: 'لوحة التحكم', icon: FiHome },
@@ -9,62 +9,78 @@ const navItems = [
   { path: '/alerts', label: 'التنبيهات والإنذارات', icon: FiAlertTriangle },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
+  const location = useLocation()
+
   return (
-    <aside style={{
-      width: 'var(--sidebar-width)',
-      background: 'linear-gradient(180deg, #1B6B4A 0%, #145236 100%)',
-      color: 'white',
-      position: 'fixed',
-      right: 0,
-      top: 0,
-      bottom: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      zIndex: 100,
-      boxShadow: '-4px 0 15px rgba(0,0,0,0.1)'
-    }}>
-      <div style={{
-        padding: '28px 24px',
-        borderBottom: '1px solid rgba(255,255,255,0.15)'
+    <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            zIndex: 99, display: 'none',
+          }}
+          className="sidebar-overlay"
+        />
+      )}
+
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{
+        width: 'var(--sidebar-width)',
+        background: 'linear-gradient(180deg, #1B6B4A 0%, #145236 100%)',
+        color: 'white',
+        position: 'fixed',
+        right: 0, top: 0, bottom: 0,
+        display: 'flex', flexDirection: 'column',
+        zIndex: 100,
+        boxShadow: '-4px 0 15px rgba(0,0,0,0.1)',
+        transition: 'transform 0.3s ease',
       }}>
-        <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4, letterSpacing: 1 }}>الماهر بالقرآن</div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>الموجه التربوي</h1>
-      </div>
-      <nav style={{ padding: '16px 12px', flex: 1 }}>
-        {navItems.map(item => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/'}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 16px',
-              borderRadius: 10,
-              marginBottom: 4,
-              color: 'white',
-              fontSize: 15,
-              fontWeight: isActive ? 600 : 400,
-              background: isActive ? 'rgba(255,255,255,0.18)' : 'transparent',
-              transition: 'all 0.2s ease'
-            })}
-          >
-            <item.icon size={20} />
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div style={{
-        padding: '16px 24px',
-        borderTop: '1px solid rgba(255,255,255,0.15)',
-        fontSize: 12,
-        opacity: 0.5,
-        textAlign: 'center'
-      }}>
-        v1.0 - الموجه التربوي
-      </div>
-    </aside>
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <div>
+            <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4, letterSpacing: 1 }}>الماهر بالقرآن</div>
+            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>الموجه التربوي</h1>
+          </div>
+          <button onClick={onClose} className="sidebar-close-btn" style={{
+            background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white',
+            borderRadius: 8, padding: 6, cursor: 'pointer', display: 'none'
+          }}>
+            <FiX size={20} />
+          </button>
+        </div>
+        <nav style={{ padding: '16px 12px', flex: 1 }}>
+          {navItems.map(item => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === '/'}
+              onClick={onClose}
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderRadius: 10, marginBottom: 4,
+                color: 'white', fontSize: 15,
+                fontWeight: isActive ? 600 : 400,
+                background: isActive ? 'rgba(255,255,255,0.18)' : 'transparent',
+                transition: 'all 0.2s ease'
+              })}
+            >
+              <item.icon size={20} />
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div style={{
+          padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.15)',
+          fontSize: 12, opacity: 0.5, textAlign: 'center'
+        }}>
+          v1.0 - الموجه التربوي
+        </div>
+      </aside>
+    </>
   )
 }
