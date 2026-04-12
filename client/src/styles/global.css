@@ -181,15 +181,17 @@ input, textarea, select {
 
 @media (max-width: 768px) {
   .grid-2, .grid-3, .grid-4 {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
-  /* Sidebar: hidden by default on mobile, shown when .open */
+  /* Sidebar: slides off-screen to the right on mobile */
   .sidebar {
-    transform: translateX(100%);
+    width: 280px !important;
+    transform: translateX(100%) !important;
   }
   .sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
 
   /* Show overlay when sidebar is open */
@@ -207,10 +209,76 @@ input, textarea, select {
     display: flex !important;
   }
 
-  /* Remove sidebar margin from main content */
+  /* Main content takes full width */
   .main-content {
     margin-right: 0 !important;
-    padding: 70px 16px 24px 16px !important;
+    padding: 60px 12px 24px 12px !important;
+    width: 100% !important;
+  }
+
+  /* Stats grid responsive */
+  .grid-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* Responsive font and spacing */
+  .page-title {
+    font-size: 20px !important;
+  }
+  .page-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card {
+    padding: 16px !important;
+  }
+  .stat-card {
+    padding: 12px !important;
+  }
+  .stat-card .stat-value {
+    font-size: 22px !important;
+  }
+  .stat-card .stat-label {
+    font-size: 12px !important;
+  }
+  .filters-bar {
+    flex-direction: column;
+  }
+  .filters-bar .search-input-wrapper {
+    min-width: 100%;
+  }
+  .filters-bar select {
+    width: 100% !important;
+  }
+  table {
+    font-size: 12px;
+  }
+  table th, table td {
+    padding: 8px 6px !important;
+  }
+  .student-info-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .timeline {
+    padding-right: 20px !important;
+  }
+  .type-selector {
+    flex-direction: column;
+  }
+  .modal-content {
+    max-width: 95vw !important;
+    padding: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+  }
+  .grid-stats {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
   }
 }
 

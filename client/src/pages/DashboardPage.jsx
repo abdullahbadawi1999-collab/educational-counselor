@@ -126,7 +126,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div className="grid-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
         <div className="stat-card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ background: '#E3F2FD', borderRadius: 10, padding: 10 }}><FiUsers size={20} color="#1565C0" /></div>
