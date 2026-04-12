@@ -403,9 +403,21 @@ export default function StudentDetailPage({ showToast }) {
                       <FiCheck size={14} style={{ marginLeft: 4 }} />الإجراءات المتخذة:
                     </div>
                     {b.actions.map(a => (
-                      <div key={a.id} className="action-card">
-                        <div style={{ fontWeight: 500 }}>{a.description}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{a.action_date}</div>
+                      <div key={a.id} className="action-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{a.description}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{a.action_date}</div>
+                        </div>
+                        <button onClick={async () => {
+                          if (!confirm('هل أنت متأكد من حذف هذا الإجراء؟')) return
+                          try {
+                            await api.delete(`/actions/${a.id}`)
+                            showToast('تم حذف الإجراء')
+                            fetchData()
+                          } catch { showToast('حدث خطأ', 'error') }
+                        }} style={{ background: 'none', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 4, flexShrink: 0 }}>
+                          <FiTrash2 size={14} />
+                        </button>
                       </div>
                     ))}
                   </div>
