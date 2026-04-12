@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { FiMenu } from 'react-icons/fi'
 import Sidebar from './components/layout/Sidebar'
+import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CirclesPage from './pages/CirclesPage'
 import StudentsPage from './pages/StudentsPage'
@@ -12,10 +13,18 @@ import AlertsPage from './pages/AlertsPage'
 function App() {
   const [toast, setToast] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem('auth') === 'true'
+  )
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />
   }
 
   return (

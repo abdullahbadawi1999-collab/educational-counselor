@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiCheck, FiFilter, FiAlertTriangle, FiAlertCircle, FiXCircle } from 'react-icons/fi'
+import { FiCheck, FiFilter, FiAlertTriangle, FiAlertCircle, FiXCircle, FiTrash2 } from 'react-icons/fi'
 import api from '../services/api'
 
 const levelConfig = {
@@ -149,7 +149,19 @@ export default function AlertsPage({ showToast }) {
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{alert.created_at?.split('T')[0] || alert.created_at}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{alert.created_at?.split('T')[0] || alert.created_at}</span>
+                      <button onClick={async () => {
+                        if (!confirm('هل أنت متأكد من حذف هذا التنبيه/الإنذار؟')) return
+                        try {
+                          await api.delete(`/alerts/${alert.id}`)
+                          showToast('تم الحذف')
+                          fetchAlerts()
+                        } catch { showToast('حدث خطأ', 'error') }
+                      }} style={{ background: 'none', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 4 }}>
+                        <FiTrash2 size={15} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Student */}

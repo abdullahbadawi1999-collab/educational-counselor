@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { FiHome, FiUsers, FiBookOpen, FiPlusCircle, FiAlertTriangle, FiX } from 'react-icons/fi'
+import { FiHome, FiUsers, FiBookOpen, FiPlusCircle, FiAlertTriangle, FiX, FiLogOut } from 'react-icons/fi'
 
 const navItems = [
   { path: '/', label: 'لوحة التحكم', icon: FiHome },
@@ -74,11 +74,19 @@ export default function Sidebar({ isOpen, onClose }) {
             </NavLink>
           ))}
         </nav>
-        <div style={{
-          padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.15)',
-          fontSize: 12, opacity: 0.5, textAlign: 'center'
-        }}>
-          v1.0 - الموجه التربوي
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+          <button onClick={() => {
+            localStorage.removeItem('auth')
+            window.location.reload()
+          }} style={{
+            display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+            padding: '10px 16px', borderRadius: 10, border: 'none',
+            background: 'rgba(255,255,255,0.1)', color: 'white',
+            fontSize: 14, cursor: 'pointer', fontFamily: 'inherit'
+          }}>
+            <FiLogOut size={18} />
+            تسجيل خروج
+          </button>
         </div>
       </aside>
     </>
