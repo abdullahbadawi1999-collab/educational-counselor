@@ -216,10 +216,11 @@ input, textarea, select {
     width: 100% !important;
   }
 
-  /* Stats grid responsive */
-  .grid-stats {
+  /* Dashboard stats grid */
+  .dashboard-stats {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 10px !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
   }
 
   /* Responsive font and spacing */
@@ -276,9 +277,9 @@ input, textarea, select {
   .grid-2, .grid-3, .grid-4 {
     grid-template-columns: 1fr;
   }
-  .grid-stats {
+  .dashboard-stats {
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
 }
 
@@ -549,8 +550,15 @@ table tr {
   font-size: 15px;
 }
 
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
 .stat-card {
-  padding: 20px;
+  padding: 16px;
   border-radius: var(--radius);
   background: white;
   border: 1px solid var(--border-light);

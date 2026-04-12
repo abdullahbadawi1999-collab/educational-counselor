@@ -30,179 +30,108 @@ export default function DashboardPage() {
   const circleChartData = {
     labels: circleNames,
     datasets: [
-      {
-        label: 'إيجابي',
-        data: circleNames.map(n => byCircle.find(d => d.circle_name === n && d.type === 'positive')?.count || 0),
-        backgroundColor: '#4CAF50',
-        borderRadius: 6,
-      },
-      {
-        label: 'سلبي',
-        data: circleNames.map(n => byCircle.find(d => d.circle_name === n && d.type === 'negative')?.count || 0),
-        backgroundColor: '#EF5350',
-        borderRadius: 6,
-      }
+      { label: 'إيجابي', data: circleNames.map(n => byCircle.find(d => d.circle_name === n && d.type === 'positive')?.count || 0), backgroundColor: '#4CAF50', borderRadius: 6 },
+      { label: 'سلبي', data: circleNames.map(n => byCircle.find(d => d.circle_name === n && d.type === 'negative')?.count || 0), backgroundColor: '#EF5350', borderRadius: 6 }
     ]
   }
 
   const typeChartData = {
     labels: ['إيجابي', 'سلبي'],
-    datasets: [{
-      data: [
-        byType.find(d => d.type === 'positive')?.count || 0,
-        byType.find(d => d.type === 'negative')?.count || 0
-      ],
-      backgroundColor: ['#4CAF50', '#EF5350'],
-      borderWidth: 0,
-    }]
+    datasets: [{ data: [byType.find(d => d.type === 'positive')?.count || 0, byType.find(d => d.type === 'negative')?.count || 0], backgroundColor: ['#4CAF50', '#EF5350'], borderWidth: 0 }]
   }
 
   const months = [...new Set(byMonth.map(d => d.month))].sort()
   const monthChartData = {
     labels: months,
     datasets: [
-      {
-        label: 'إيجابي',
-        data: months.map(m => byMonth.find(d => d.month === m && d.type === 'positive')?.count || 0),
-        borderColor: '#4CAF50',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'سلبي',
-        data: months.map(m => byMonth.find(d => d.month === m && d.type === 'negative')?.count || 0),
-        borderColor: '#EF5350',
-        backgroundColor: 'rgba(239, 83, 80, 0.1)',
-        fill: true,
-        tension: 0.4,
-      }
+      { label: 'إيجابي', data: months.map(m => byMonth.find(d => d.month === m && d.type === 'positive')?.count || 0), borderColor: '#4CAF50', backgroundColor: 'rgba(76, 175, 80, 0.1)', fill: true, tension: 0.4 },
+      { label: 'سلبي', data: months.map(m => byMonth.find(d => d.month === m && d.type === 'negative')?.count || 0), borderColor: '#EF5350', backgroundColor: 'rgba(239, 83, 80, 0.1)', fill: true, tension: 0.4 }
     ]
   }
 
   const completionChartData = {
     labels: ['تم اتخاذ إجراء', 'بدون إجراء'],
-    datasets: [{
-      data: [completion?.with_actions || 0, completion?.without_actions || 0],
-      backgroundColor: ['#1565C0', '#FFB74D'],
-      borderWidth: 0,
-    }]
+    datasets: [{ data: [completion?.with_actions || 0, completion?.without_actions || 0], backgroundColor: ['#1565C0', '#FFB74D'], borderWidth: 0 }]
   }
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom', rtl: true } }
-  }
+  const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', rtl: true } } }
+  const barOptions = { ...chartOptions, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
 
-  const barOptions = {
-    ...chartOptions,
-    indexAxis: 'y',
-    scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
-  }
+  const stats = [
+    { value: overview?.total_students || 0, label: 'الطلاب', color: '#1565C0', bg: '#E3F2FD', icon: FiUsers },
+    { value: overview?.total_circles || 0, label: 'الحلقات', color: '#7B1FA2', bg: '#F3E5F5', icon: FiBookOpen },
+    { value: overview?.positive_behaviors || 0, label: 'إيجابي', color: '#2E7D32', bg: '#E8F5E9', icon: FiThumbsUp },
+    { value: overview?.negative_behaviors || 0, label: 'سلبي', color: '#D32F2F', bg: '#FFEBEE', icon: FiThumbsDown },
+    { value: overview?.pending_alerts || 0, label: 'تنبيهات معلقة', color: '#F57C00', bg: '#FFF3E0', icon: FiAlertTriangle, onClick: () => navigate('/alerts') },
+  ]
 
   return (
     <div>
-      <h1 className="page-title" style={{ marginBottom: 24 }}>لوحة التحكم</h1>
+      <h1 className="page-title" style={{ marginBottom: 20 }}>لوحة التحكم</h1>
 
       {/* Pending Alerts Banner */}
       {overview?.pending_alerts > 0 && (
-        <div onClick={() => navigate('/alerts')} style={{
+        <div onClick={() => navigate('/alerts')} className="card" style={{
           background: 'linear-gradient(135deg, #FFF3E0, #FFECB3)', border: '2px solid #FFE082',
-          borderRadius: 12, padding: 16, marginBottom: 20, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', gap: 10, flexWrap: 'wrap'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <FiAlertTriangle size={24} color="#F57C00" />
+            <FiAlertTriangle size={22} color="#F57C00" />
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#E65100' }}>
-                {overview.pending_alerts} تنبيه/إنذار بانتظار إجراءك
-              </div>
-              <div style={{ fontSize: 13, color: '#BF360C' }}>اضغط هنا للمراجعة واتخاذ الإجراء المناسب</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: '#E65100' }}>{overview.pending_alerts} تنبيه/إنذار بانتظار إجراءك</div>
+              <div style={{ fontSize: 12, color: '#BF360C' }}>اضغط هنا للمراجعة</div>
             </div>
           </div>
-          <span style={{ fontSize: 20 }}>←</span>
+          <span style={{ fontSize: 18 }}>←</span>
         </div>
       )}
 
       {/* Stat Cards */}
-      <div className="grid-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
-        <div className="stat-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: '#E3F2FD', borderRadius: 10, padding: 10 }}><FiUsers size={20} color="#1565C0" /></div>
-            <div>
-              <div className="stat-value" style={{ color: '#1565C0', fontSize: 28 }}>{overview?.total_students || 0}</div>
-              <div className="stat-label">الطلاب</div>
+      <div className="dashboard-stats">
+        {stats.map((s, i) => (
+          <div key={i} className="stat-card" onClick={s.onClick} style={s.onClick ? { cursor: 'pointer' } : {}}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ background: s.bg, borderRadius: 10, padding: 8, flexShrink: 0 }}>
+                <s.icon size={18} color={s.color} />
+              </div>
+              <div>
+                <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
+                <div className="stat-label">{s.label}</div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: '#F3E5F5', borderRadius: 10, padding: 10 }}><FiBookOpen size={20} color="#7B1FA2" /></div>
-            <div>
-              <div className="stat-value" style={{ color: '#7B1FA2', fontSize: 28 }}>{overview?.total_circles || 0}</div>
-              <div className="stat-label">الحلقات</div>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: '#E8F5E9', borderRadius: 10, padding: 10 }}><FiThumbsUp size={20} color="#2E7D32" /></div>
-            <div>
-              <div className="stat-value" style={{ color: '#2E7D32', fontSize: 28 }}>{overview?.positive_behaviors || 0}</div>
-              <div className="stat-label">إيجابي</div>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: '#FFEBEE', borderRadius: 10, padding: 10 }}><FiThumbsDown size={20} color="#D32F2F" /></div>
-            <div>
-              <div className="stat-value" style={{ color: '#D32F2F', fontSize: 28 }}>{overview?.negative_behaviors || 0}</div>
-              <div className="stat-label">سلبي</div>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card" onClick={() => navigate('/alerts')} style={{ cursor: 'pointer' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: '#FFF3E0', borderRadius: 10, padding: 10 }}><FiAlertTriangle size={20} color="#F57C00" /></div>
-            <div>
-              <div className="stat-value" style={{ color: '#F57C00', fontSize: 28 }}>{overview?.pending_alerts || 0}</div>
-              <div className="stat-label">تنبيهات معلقة</div>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid-2" style={{ marginBottom: 28 }}>
+      {/* Charts */}
+      <div className="grid-2" style={{ marginBottom: 20 }}>
         <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: 16 }}>السلوكيات حسب الحلقة</h3>
-          <div style={{ height: Math.max(300, circleNames.length * 40) }}>
+          <h3 style={{ marginBottom: 12, fontSize: 15 }}>السلوكيات حسب الحلقة</h3>
+          <div style={{ height: Math.max(250, circleNames.length * 35) }}>
             {circleNames.length > 0 ? <Bar data={circleChartData} options={barOptions} /> :
               <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 60 }}>لا توجد بيانات بعد</p>}
           </div>
         </div>
         <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: 16 }}>توزيع السلوكيات</h3>
-          <div style={{ height: 300, display: 'flex', justifyContent: 'center' }}>
+          <h3 style={{ marginBottom: 12, fontSize: 15 }}>توزيع السلوكيات</h3>
+          <div style={{ height: 250, display: 'flex', justifyContent: 'center' }}>
             <Doughnut data={typeChartData} options={{ ...chartOptions, cutout: '60%' }} />
           </div>
         </div>
       </div>
 
-      {/* Charts Row 2 */}
-      <div className="grid-2" style={{ marginBottom: 28 }}>
+      <div className="grid-2" style={{ marginBottom: 20 }}>
         <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: 16 }}>السلوكيات حسب الشهر</h3>
-          <div style={{ height: 300 }}>
+          <h3 style={{ marginBottom: 12, fontSize: 15 }}>السلوكيات حسب الشهر</h3>
+          <div style={{ height: 250 }}>
             {months.length > 0 ? <Line data={monthChartData} options={chartOptions} /> :
               <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 60 }}>لا توجد بيانات بعد</p>}
           </div>
         </div>
         <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: 16 }}>نسبة اتخاذ الإجراءات</h3>
-          <div style={{ height: 300, display: 'flex', justifyContent: 'center' }}>
+          <h3 style={{ marginBottom: 12, fontSize: 15 }}>نسبة اتخاذ الإجراءات</h3>
+          <div style={{ height: 250, display: 'flex', justifyContent: 'center' }}>
             <Pie data={completionChartData} options={chartOptions} />
           </div>
         </div>
@@ -210,7 +139,7 @@ export default function DashboardPage() {
 
       {/* Recent Behaviors */}
       <div className="card">
-        <h3 style={{ marginBottom: 16, fontSize: 16 }}>آخر السلوكيات المسجلة</h3>
+        <h3 style={{ marginBottom: 12, fontSize: 15 }}>آخر السلوكيات المسجلة</h3>
         {recentBehaviors.length > 0 ? (
           <div className="table-container">
             <table>
@@ -244,7 +173,7 @@ export default function DashboardPage() {
             </table>
           </div>
         ) : (
-          <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: 40 }}>لم يتم تسجيل أي سلوكيات بعد. ابدأ بتسجيل سلوك جديد.</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: 30 }}>لم يتم تسجيل أي سلوكيات بعد. ابدأ بتسجيل سلوك جديد.</p>
         )}
       </div>
     </div>
