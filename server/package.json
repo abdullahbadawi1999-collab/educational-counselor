@@ -1,0 +1,20 @@
+{
+  "name": "educational-counselor-server",
+  "version": "1.0.0",
+  "description": "الموجه التربوي - الماهر بالقرآن",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "seed": "node src/database/seed.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.11.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ميثاق الالتزام والانضباط – حلقات الماهر بالقرآن</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Cairo', 'Amiri', serif;
+      background: #f0f4f0;
+      color: #1a2e1a;
+      direction: rtl;
+    }
+
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #fff;
+      min-height: 100vh;
+      box-shadow: 0 0 40px rgba(0,0,0,0.12);
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: linear-gradient(135deg, #1a4731 0%, #2d6a4f 50%, #1a4731 100%);
+      color: #fff;
+      text-align: center;
+      padding: 38px 30px 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -40px; left: -40px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: -30px;
+      width: 240px; height: 240px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .header-icon { font-size: 44px; margin-bottom: 8px; display: block; }
+    .header h1 { font-size: 26px; font-weight: 900; letter-spacing: 0.02em; margin-bottom: 6px; }
+    .header .subtitle { font-size: 14px; color: #a8d5b5; font-weight: 400; }
+    .header .semester-badge {
+      display: inline-block;
+      margin-top: 14px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      font-size: 13px;
+      padding: 5px 18px;
+      border-radius: 20px;
+    }
+
+    /* ===== INTRO ===== */
+    .verse-bar {
+      background: #f9f5ec;
+      border-right: 5px solid #c9993a;
+      padding: 16px 22px;
+      margin: 28px 28px 0;
+      border-radius: 0 8px 8px 0;
+      font-family: 'Amiri', serif;
+      font-size: 18px;
+      color: #5a3e10;
+      text-align: center;
+      line-height: 1.9;
+    }
+    .verse-ref {
+      font-size: 12px; color: #8a6a30; margin-top: 4px;
+      display: block; font-family: 'Cairo', sans-serif;
+    }
+
+    .intro-box {
+      margin: 20px 28px 0;
+      background: #f4fbf6;
+      border: 1px solid #b8dfc4;
+      border-radius: 12px;
+      padding: 18px 22px;
+      font-size: 14px;
+      color: #2e5040;
+      line-height: 1.85;
+    }
+    .intro-box strong { color: #1a4731; }
+
+    /* ===== DIVIDER ===== */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to left, transparent, #d4e8d8, transparent);
+      margin: 8px 28px;
+    }
+
+    /* ===== SECTION ===== */
+    .section { padding: 24px 30px 10px; }
+    .section-title {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+    }
+    .section-title-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .green-icon  { background: #e6f4ea; }
+    .gold-icon   { background: #fef8e7; }
+    .red-icon    { background: #fdecea; }
+    .blue-icon   { background: #e8f0fe; }
+    .purple-icon { background: #f3e8ff; }
+
+    .section-title h2 { font-size: 20px; font-weight: 900; color: #1a4731; }
+    .section-title .section-sub { font-size: 12px; color: #6b8f6b; font-weight: 400; }
+
+    /* ===== INFO CARDS (Attendance rules) ===== */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+
+    .info-card {
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid;
+    }
+    .info-card.green  { background: #f0faf3; border-color: #b8dfc4; }
+    .info-card.amber  { background: #fffbf0; border-color: #e8cb80; }
+    .info-card.red    { background: #fff5f5; border-color: #f5c0bb; }
+    .info-card.blue   { background: #f0f6ff; border-color: #b8cff0; }
+
+    .info-card-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .info-card.green .info-card-label  { color: #2d6a4f; }
+    .info-card.amber .info-card-label  { color: #8a6010; }
+    .info-card.red   .info-card-label  { color: #b03020; }
+    .info-card.blue  .info-card-label  { color: #1a3a8a; }
+
+    .info-card-value {
+      font-size: 22px; font-weight: 900; margin-bottom: 4px;
+    }
+    .info-card.green .info-card-value  { color: #1a4731; }
+    .info-card.amber .info-card-value  { color: #7a5010; }
+    .info-card.red   .info-card-value  { color: #9a2010; }
+    .info-card.blue  .info-card-value  { color: #1a3a8a; }
+
+    .info-card-desc { font-size: 12px; color: #556655; line-height: 1.65; }
+
+    /* ===== RULE ROWS ===== */
+    .rule-row {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #f8fbf8;
+      border: 1px solid #d8ead8;
+      margin-bottom: 10px;
+    }
+    .rule-row-icon {
+      font-size: 22px; flex-shrink: 0; margin-top: 2px;
+    }
+    .rule-row-body { flex: 1; }
+    .rule-row-title {
+      font-size: 14px; font-weight: 700; color: #1a4731; margin-bottom: 3px;
+    }
+    .rule-row-desc { font-size: 13px; color: #4a6652; line-height: 1.7; }
+
+    /* ===== WARNINGS TABLE ===== */
+    .warnings-wrapper { margin-bottom: 20px; }
+
+    .warning-item {
+      display: flex; gap: 0; margin-bottom: 0; position: relative;
+    }
+    .warning-item + .warning-item { margin-top: 10px; }
+
+    .warning-level {
+      width: 90px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border-radius: 12px 0 0 12px;
+      padding: 14px 10px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 13px;
+    }
+    .warning-level-num { font-size: 28px; font-weight: 900; line-height: 1; }
+
+    .warning-body {
+      flex: 1;
+      border-radius: 0 12px 12px 0;
+      padding: 14px 18px;
+      border: 1px solid;
+      border-right: none;
+    }
+    .warning-body-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .warning-trigger { font-size: 12px; margin-bottom: 8px; }
+    .warning-action { font-size: 13px; line-height: 1.7; }
+    .warning-tag {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 10px; border-radius: 20px; margin-bottom: 6px;
+    }
+
+    /* Level 1 – Blue */
+    .w1 .warning-level { background: #dbeafe; color: #1e40af; }
+    .w1 .warning-body  { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+    .w1 .warning-body-title { color: #1e40af; }
+    .w1 .warning-tag   { background: #dbeafe; color: #1e40af; }
+
+    /* Level 2 – Amber */
+    .w2 .warning-level { background: #fef3c7; color: #92400e; }
+    .w2 .warning-body  { background: #fffbeb; border-color: #fcd34d; color: #78350f; }
+    .w2 .warning-body-title { color: #92400e; }
+    .w2 .warning-tag   { background: #fef3c7; color: #92400e; }
+
+    /* Level 3 – Red */
+    .w3 .warning-level { background: #fee2e2; color: #991b1b; }
+    .w3 .warning-body  { background: #fff5f5; border-color: #fca5a5; color: #7f1d1d; }
+    .w3 .warning-body-title { color: #991b1b; }
+    .w3 .warning-tag   { background: #fee2e2; color: #991b1b; }
+
+    /* ===== ESCALATION TABLE ===== */
+    .escalation-table {
+      margin-bottom: 6px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #d4e8d8;
+    }
+    .esc-header {
+      display: grid;
+      grid-template-columns: 110px 1fr 1fr 1fr;
+      background: #f0f7f2;
+      border-bottom: 1px solid #d4e8d8;
+    }
+    .esc-type-head { /* empty corner */ }
+    .esc-stage-head {
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      border-right: 1px solid #d4e8d8;
+    }
+    .esc-stage-head:last-child { border-right: none; }
+    .esc-stage-icon { font-size: 18px; }
+    .s-blue  { color: #1e40af; background: #eff6ff; }
+    .s-amber { color: #92400e; background: #fffbeb; }
+    .s-red   { color: #991b1b; background: #fff5f5; }
+
+    .esc-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 20px 1fr 20px 1fr;
+      align-items: center;
+      border-bottom: 1px solid #e8f0e8;
+    }
+    .esc-row:last-child { border-bottom: none; }
+
+    .esc-type-label {
+      padding: 16px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      border-left: 1px solid #d4e8d8;
+      line-height: 1.4;
+    }
+    .esc-type-icon { font-size: 20px; }
+    .t-red   { background: #fff5f5; color: #9a2010; }
+    .t-green { background: #f0faf3; color: #1a5c38; }
+
+    .esc-cell {
+      padding: 14px 8px;
+      text-align: center;
+      border-right: 1px solid #e8f0e8;
+    }
+    .esc-num {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .esc-sub { font-size: 11px; color: #667; }
+    .c-blue  { background: #f0f6ff; }
+    .c-blue  .esc-num { color: #1e40af; }
+    .c-amber { background: #fffbeb; }
+    .c-amber .esc-num { color: #92400e; }
+    .c-red   { background: #fff5f5; border-right: none; }
+    .c-red   .esc-num { color: #991b1b; }
+
+    .esc-arrow {
+      text-align: center;
+      font-size: 16px;
+      color: #aaa;
+      font-weight: 700;
+    }
+
+    @media (max-width: 600px) {
+      .esc-header { grid-template-columns: 80px 1fr 1fr 1fr; }
+      .esc-row    { grid-template-columns: 80px 1fr 14px 1fr 14px 1fr; }
+      .esc-num { font-size: 20px; }
+      .esc-type-label { font-size: 11px; padding: 12px 6px; }
+    }
+
+    /* ===== VIOLATIONS LIST ===== */
+    .violations-list { margin-bottom: 16px; }
+    .violation-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 16px; border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .violation-item.v-red    { background: #fff5f5; border-right: 3px solid #e05050; }
+    .violation-item.v-amber  { background: #fffbf0; border-right: 3px solid #d4993a; }
+    .violation-item.v-blue   { background: #f0f6ff; border-right: 3px solid #5080e0; }
+
+    .violation-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .violation-text { flex: 1; }
+    .violation-name { font-size: 14px; font-weight: 700; color: #1a2e1a; margin-bottom: 2px; }
+    .violation-desc { font-size: 13px; color: #4a5a4a; line-height: 1.65; }
+    .violation-result {
+      font-size: 11px; font-weight: 700; margin-top: 4px;
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+    }
+    .v-red   .violation-result { background: #fee2e2; color: #991b1b; }
+    .v-amber .violation-result { background: #fef3c7; color: #92400e; }
+    .v-blue  .violation-result { background: #dbeafe; color: #1e40af; }
+
+    /* ===== PARENT BOX ===== */
+    .parent-section {
+      background: linear-gradient(135deg, #eef6ff 0%, #f0f8ff 100%);
+      border-top: 3px solid #3b7dd8;
+      padding: 28px 30px 20px;
+    }
+    .parent-section .section-title h2 { color: #1a3a6b; }
+
+    .parent-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;
+    }
+    @media (max-width: 600px) { .parent-cards { grid-template-columns: 1fr; } }
+
+    .parent-card {
+      background: #fff; border-radius: 12px; padding: 16px;
+      border: 1px solid #c8ddf5;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .parent-card-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
+    .parent-card-title { font-size: 14px; font-weight: 700; color: #1a3a6b; margin-bottom: 4px; }
+    .parent-card-desc  { font-size: 13px; color: #3a5080; line-height: 1.7; }
+
+    /* ===== NOTE BOX ===== */
+    .note-box {
+      margin: 0 28px 24px;
+      background: #f9f5ec;
+      border: 1px solid #e0c87a;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 13px;
+      color: #5a3e10;
+      line-height: 1.8;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .note-box-icon { font-size: 22px; flex-shrink: 0; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #6b8f6b;
+      border-top: 1px solid #e0eae0;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <span class="header-icon">📜</span>
+    <h1>ميثاق الالتزام والانضباط</h1>
+    <div class="subtitle">حلقات الماهر بالقرآن</div>
+    <div class="semester-badge">الفصل الدراسي الثاني ❋ ١٤٤٧ هـ — ٢٠٢٦ م</div>
+  </div>
+
+  <!-- INTRO VERSE -->
+  <div class="verse-bar">
+    ﴿ ذَٰلِكَ وَمَن يُعَظِّمْ شَعَائِرَ اللَّهِ فَإِنَّهَا مِن تَقْوَى الْقُلُوبِ ﴾
+    <span class="verse-ref">سورة الحج – الآية ٣٢</span>
+  </div>
+
+  <!-- INTRO TEXT -->
+  <div class="intro-box">
+    <strong>بسم الله الرحمن الرحيم،</strong><br>
+    وضعنا هذا الميثاق ليكون مرجعًا واضحًا للجميع. ليس هدفه العقاب، بل هو إطار يضمن أن تسير الحلقة بشكل يليق بكتاب الله. نسأل الله أن يوفق الجميع لما يحبه ويرضاه.
+  </div>
+
+  <div class="divider" style="margin-top: 20px;"></div>
+
+  <!-- ===== SECTION 1: ATTENDANCE ===== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-title-icon green-icon">📅</div>
+      <div>
+        <h2>نظام الحضور والغياب والتأخر</h2>
+        <div class="section-sub">الانتظام في الحضور ركيزة النجاح</div>
+      </div>
+    </div>
+
+    <!-- Escalation visual -->
+    <div class="escalation-table">
+
+      <!-- Header row -->
+      <div class="esc-header">
+        <div class="esc-type-head"></div>
+        <div class="esc-stage-head s-blue">
+          <span class="esc-stage-icon">📞</span>
+          <span>تواصل مع ولي الأمر</span>
+        </div>
+        <div class="esc-stage-head s-amber">
+          <span class="esc-stage-icon">⚠️</span>
+          <span>إنذار رسمي</span>
+        </div>
+        <div class="esc-stage-head s-red">
+          <span class="esc-stage-icon">🚦</span>
+          <span>إجراء</span>
+        </div>
+      </div>
+
+      <!-- Row 1: Unexcused absence -->
+      <div class="esc-row">
+        <div class="esc-type-label t-red">
+          <span class="esc-type-icon">❌</span>
+          <span>غياب<br>بدون عذر</span>
+        </div>
+        <div class="esc-cell c-blue">
+          <div class="esc-num">١</div>
+          <div class="esc-sub">مرة واحدة</div>
+        </div>
+        <div class="esc-arrow">←</div>
+        <div class="esc-cell c-amber">
+          <div class="esc-num">٢</div>
+          <div class="esc-sub">مرتان</div>
+        </div>
+        <div class="esc-arrow">←</div>
+        <div class="esc-cell c-red">
+          <div class="esc-num">٣</div>
+          <div class="esc-sub">٣ مرات</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Excused absence -->
+      <div class="esc-row">
+        <div class="esc-type-label t-green">
+          <span class="esc-type-icon">✅</span>
+          <span>غياب<br>بعذر</span>
+        </div>
+        <div class="esc-cell c-blue">
+          <div class="esc-num">٢</div>
+          <div class="esc-sub">مرتان</div>
+        </div>
+        <div class="esc-arrow">←</div>
+        <div class="esc-cell c-amber">
+          <div class="esc-num">٤</div>
+          <div class="esc-sub">٤ مرات</div>
+        </div>
+        <div class="esc-arrow">←</div>
+        <div class="esc-cell c-red">
+          <div class="esc-num">٦</div>
+          <div class="esc-sub">٦ مرات</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tardiness & Notification rules -->
+    <div class="info-grid" style="margin-top: 14px;">
+      <div class="info-card amber">
+        <div class="info-card-label">⏰ التأخر في الحضور</div>
+        <div class="info-card-value">٣ مرات = غياب</div>
+        <div class="info-card-desc">كل ٣ مرات تأخر بدون إخطار مسبق تُحتسب غيابة واحدة بدون عذر وتدخل في المسار أعلاه.</div>
+      </div>
+      <div class="info-card blue">
+        <div class="info-card-label">📲 الإخطار المسبق – ضرورة</div>
+        <div class="info-card-value">قبل موعد الحلقة</div>
+        <div class="info-card-desc">لكي يُحتسب الغياب مبررًا، يجب إبلاغ المعلم قبل موعد الحلقة. الإخطار بعد الموعد لا يُقبل.</div>
+      </div>
+    </div>
+
+    <div class="rule-row" style="margin-top: 14px;">
+      <div class="rule-row-icon">📌</div>
+      <div class="rule-row-body">
+        <div class="rule-row-title">ماذا يُعد عذرًا مقبولاً؟</div>
+        <div class="rule-row-desc">
+          <strong>مقبول:</strong> المرض، والظروف العائلية الطارئة.<br>
+          <strong>مقبول بشرط:</strong> الامتحانات المدرسية الرسمية — يُرجى تسليم جدول الامتحانات للمعلم مسبقًا حتى تراعي الحلقة مواعيده. <em>تسليم الجدول مسؤولية ولي الأمر.</em><br>
+          <strong>غير مقبول:</strong> الدروس الخصوصية، وتمارين الأنشطة الرياضية، والمواعيد الاجتماعية. نطلب من أولياء الأمور مراعاة ذلك عند جدولة أوقات أبنائهم.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== SECTION 2: WARNING SYSTEM ===== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-title-icon red-icon">🚦</div>
+      <div>
+        <h2>نظام التنبيهات والإنذارات</h2>
+      </div>
+    </div>
+
+    <div class="warnings-wrapper">
+
+      <!-- Warning 1 -->
+      <div class="warning-item w1">
+        <div class="warning-level">
+          <div class="warning-level-num">١</div>
+          تنبيه
+        </div>
+        <div class="warning-body">
+          <div class="warning-tag">المرحلة الأولى</div>
+          <div class="warning-body-title">تنبيه ودي مع اتصال بولي الأمر</div>
+          <div class="warning-action">يُجري المعلم اتصالًا هاتفيًا بوليّ الأمر لإبلاغه بالوضع ومناقشة أسبابه. يتلقى الطالب تنبيهًا شفهيًا داخل الحلقة. لا يُسجَّل هذا في ملف الطالب إذا تحسّن وضعه.</div>
+        </div>
+      </div>
+
+      <!-- Warning 2 -->
+      <div class="warning-item w2">
+        <div class="warning-level">
+          <div class="warning-level-num">٢</div>
+          إنذار
+        </div>
+        <div class="warning-body">
+          <div class="warning-tag">المرحلة الثانية</div>
+          <div class="warning-body-title">إنذار رسمي</div>
+          <div class="warning-trigger">📌 يُطبَّق عند: تكرار المخالفة بعد التنبيه الأول، أو وقوع مخالفة سلوكية صريحة (إساءة للمعلم أو الزملاء).</div>
+          <div class="warning-action">يتم إرسال رسالة رسمية لولي الأمر توضح المخالفة وتاريخها، للاتفاق على خطوات تصحيحية واضحة. يُوضع الطالب تحت المتابعة المكثفة لمدة أسبوعين.</div>
+        </div>
+      </div>
+
+      <!-- Warning 3 -->
+      <div class="warning-item w3">
+        <div class="warning-level">
+          <div class="warning-level-num">٣</div>
+          قرار
+        </div>
+        <div class="warning-body">
+          <div class="warning-tag">المرحلة الثالثة</div>
+          <div class="warning-body-title">يُحال الأمر للمشرفين لاتخاذ القرار المناسب</div>
+          <div class="warning-trigger">📌 يُطبَّق عند: الاستمرار في المخالفات رغم الإنذار الرسمي، أو المخالفات الجسيمة التي تؤثر على الحلقة.</div>
+          <div class="warning-action">يتشاور المشرفون لاتخاذ القرار الملائم، وقد يشمل: الإيقاف المؤقت عن الحلقة لفترة محددة، أو إعادة تقييم استمرارية الطالب. يُبلَّغ ولي الأمر بالقرار النهائي.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== SECTION 3: VIOLATIONS ===== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-title-icon gold-icon">⚖️</div>
+      <div>
+        <h2>المخالفات الأخرى وما يُقابلها</h2>
+      </div>
+    </div>
+
+    <div class="violations-list">
+
+      <div class="violation-item v-red">
+        <div class="violation-icon">🚫</div>
+        <div class="violation-text">
+          <div class="violation-name">الإساءة للمعلم أو الزملاء</div>
+          <div class="violation-desc">أي قول أو فعل مسيء أو غير محترم داخل الحلقة أو في مجموعة الواتساب.</div>
+          <span class="violation-result">إنذار فوري (المرحلة الثانية مباشرة)</span>
+        </div>
+      </div>
+
+      <div class="violation-item v-red">
+        <div class="violation-icon">📵</div>
+        <div class="violation-text">
+          <div class="violation-name">عدم الاستماع لتوجيهات المعلم أو المشرف</div>
+          <div class="violation-desc">التشاغل أو رفض التوجيه أو التكرار في عدم الامتثال أثناء الحلقة.</div>
+          <span class="violation-result">تنبيه فوري ثم إنذار عند التكرار</span>
+        </div>
+      </div>
+
+      <div class="violation-item v-amber">
+        <div class="violation-icon">📖</div>
+        <div class="violation-text">
+          <div class="violation-name">الإهمال المتكرر في الحفظ والمراجعة</div>
+          <div class="violation-desc">الحضور للحلقة بدون تحضير مسبق لثلاث جلسات متتالية أو أكثر.</div>
+          <span class="violation-result">تنبيه ثم إنذار عند الاستمرار</span>
+        </div>
+      </div>
+
+      <div class="violation-item v-blue">
+        <div class="violation-icon">⏰</div>
+        <div class="violation-text">
+          <div class="violation-name">التأخر المتكرر في الحضور</div>
+          <div class="violation-desc">التأخر بدون إخطار مسبق أو بعذر غير مقبول.</div>
+          <span class="violation-result">كل ٣ مرات تُحتسب غياب</span>
+        </div>
+      </div>
+
+      <div class="violation-item v-blue">
+        <div class="violation-icon">📒</div>
+        <div class="violation-text">
+          <div class="violation-name">نسيان كشكول المتابعة</div>
+          <div class="violation-desc">الحضور بدون الكشكول يؤثر على تقدير الطالب ويُلغي تكريمه لذلك الأسبوع.</div>
+          <span class="violation-result">حرمان من التكريم الأسبوعي</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== NOTE ===== -->
+  <div class="note-box">
+    <div class="note-box-icon">🤲</div>
+    <div>
+      <strong>ملاحظة للأسر الكريمة:</strong> هذا الميثاق لا يعني أننا نتعامل مع أبنائكم بصرامة، بل نحرص على أن يعرف الجميع القواعد مسبقًا حتى لا يكون هناك مفاجآت. بابنا مفتوح دائمًا لأي نقاش أو ظرف استثنائي، والمعلم حريص على مصلحة كل طالب. نسأل الله أن يجعل هذه الحلقة رحلة بركة لأبنائكم.
+    </div>
+  </div>
+
+  <!-- ===== PARENT SECTION ===== -->
+  <div class="parent-section">
+    <div class="section-title">
+      <div class="section-title-icon blue-icon">👨‍👩‍👦</div>
+      <div>
+        <h2>دور ولي الأمر في تفعيل الميثاق</h2>
+        <div class="section-sub">شراكتكم معنا تُكمل المسيرة وتُحقق النتائج</div>
+      </div>
+    </div>
+
+    <div class="parent-cards">
+      <div class="parent-card">
+        <div class="parent-card-icon">📅</div>
+        <div>
+          <div class="parent-card-title">أولوية الحلقة في الجدول</div>
+          <div class="parent-card-desc">احرص على أن لا يتعارض جدول ابنك الدراسي والأنشطة الأخرى مع موعد الحلقة قدر الإمكان، فالانتظام هو أساس التقدم.</div>
+        </div>
+      </div>
+      <div class="parent-card">
+        <div class="parent-card-icon">📲</div>
+        <div>
+          <div class="parent-card-title">الإخطار المسبق عند الغياب</div>
+          <div class="parent-card-desc">إذا اضطُررت لإغياب ابنك، أبلغ المعلم قبل موعد الحلقة. هذا يحفظ حق ابنك ويُحتسب غيابه مبررًا.</div>
+        </div>
+      </div>
+      <div class="parent-card">
+        <div class="parent-card-icon">📞</div>
+        <div>
+          <div class="parent-card-title">التجاوب مع اتصالات المعلم</div>
+          <div class="parent-card-desc">اتصال المعلم بك ليس عقابًا بل هو رسالة اهتمام. التجاوب السريع يساعدنا على حل أي مشكلة قبل أن تتفاقم.</div>
+        </div>
+      </div>
+      <div class="parent-card">
+        <div class="parent-card-icon">🏡</div>
+        <div>
+          <div class="parent-card-title">متابعة الحفظ في البيت</div>
+          <div class="parent-card-desc">تأكد من أن ابنك يراجع حفظه يوميًا في البيت قبل موعد الحلقة. الاستعداد البيتي هو السر الحقيقي للتقدم.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <strong>حلقات الماهر بالقرآن</strong> &nbsp;|&nbsp;
+    ميثاق الالتزام والانضباط ❋ الفصل الدراسي الثاني ١٤٤٧ هـ – ٢٠٢٦ م
+  </div>
+
+</div>
+</body>
+</html>
