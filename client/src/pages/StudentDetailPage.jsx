@@ -158,7 +158,11 @@ export default function StudentDetailPage({ showToast }) {
           <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>
             <FiArrowRight size={16} /> رجوع
           </button>
-          <h1 className="page-title">{student.name}</h1>
+          <div>
+            <h1 className="page-title" style={{ marginBottom: 2 }}>{student.name}</h1>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{student.circle_name}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-light)' }}>المعلم: {student.teacher_name}</div>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-outline btn-sm" onClick={handleExportPDF}>
@@ -341,15 +345,27 @@ export default function StudentDetailPage({ showToast }) {
             const config = levelConfig[alert.level]
             return (
               <div key={alert.id} style={{ padding: '12px 14px', borderRadius: 8, marginBottom: 8, background: config.bg, borderRight: `3px solid ${config.color}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 }}>
                   <span style={{ fontWeight: 700, color: config.color, fontSize: 14 }}>{config.icon} {alert.level_name}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: alert.status === 'pending' ? '#FFF3E0' : '#E8F5E9', color: alert.status === 'pending' ? '#F57C00' : '#2E7D32' }}>
-                    {alert.status === 'pending' ? '⏳ بانتظار' : '✅ تم'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: alert.status === 'pending' ? '#FFF3E0' : '#E8F5E9', color: alert.status === 'pending' ? '#F57C00' : '#2E7D32' }}>
+                      {alert.status === 'pending' ? '⏳ بانتظار' : '✅ تم'}
+                    </span>
+                    <button onClick={async () => {
+                      if (!confirm('هل أنت متأكد من حذف هذا التنبيه/الإنذار؟')) return
+                      try {
+                        await api.delete(`/alerts/${alert.id}`)
+                        showToast('تم الحذف')
+                        fetchData()
+                      } catch { showToast('حدث خطأ', 'error') }
+                    }} style={{ background: 'none', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 2 }}>
+                      <FiTrash2 size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div style={{ fontSize: 13 }}>{alert.reason}</div>
                 {alert.action_taken && (
-                  <div style={{ fontSize: 12, color: '#2E7D32', marginTop: 4, fontWeight: 500 }}>✅ {alert.action_taken} ({alert.action_date})</div>
+                  <div style={{ fontSize: 12, color: '#2E7D32', marginTop: 4, fontWeight: 500 }}>✅ {alert.action_taken} {alert.action_date && `(${alert.action_date})`}</div>
                 )}
               </div>
             )

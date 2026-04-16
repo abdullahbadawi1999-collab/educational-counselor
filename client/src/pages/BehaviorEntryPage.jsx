@@ -156,7 +156,7 @@ export default function BehaviorEntryPage({ showToast }) {
               {lastAlert.reason} — يمكنك مراجعته في صفحة التنبيهات والإنذارات
             </div>
           </div>
-          <button className="btn btn-sm btn-outline" onClick={() => navigate('/alerts')} style={{ whiteSpace: 'nowrap', marginRight: 'auto' }}>
+          <button className="btn btn-sm btn-outline" onClick={() => navigate('/records')} style={{ whiteSpace: 'nowrap', marginRight: 'auto' }}>
             عرض التنبيهات
           </button>
         </div>

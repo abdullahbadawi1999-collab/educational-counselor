@@ -9,6 +9,7 @@ import StudentsPage from './pages/StudentsPage'
 import StudentDetailPage from './pages/StudentDetailPage'
 import BehaviorEntryPage from './pages/BehaviorEntryPage'
 import AlertsPage from './pages/AlertsPage'
+import RecordsPage from './pages/RecordsPage'
 
 function App() {
   const [toast, setToast] = useState(null)
@@ -60,7 +61,8 @@ function App() {
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/:id" element={<StudentDetailPage showToast={showToast} />} />
           <Route path="/behaviors/new" element={<BehaviorEntryPage showToast={showToast} />} />
-          <Route path="/alerts" element={<AlertsPage showToast={showToast} />} />
+          <Route path="/alerts" element={<RecordsPage showToast={showToast} />} />
+          <Route path="/records" element={<RecordsPage showToast={showToast} />} />
         </Routes>
       </main>
       {toast && (

@@ -44,7 +44,25 @@ module.exports = function(sql) {
   router.put('/:id', async (req, res) => {
     const { status, action_taken, action_date } = req.body;
     try {
+      // Get alert details first (to sync action to behavior)
+      const alerts = await sql`SELECT * FROM alerts WHERE id = ${req.params.id}`;
+      if (!alerts.length) return res.status(404).json({ error: 'التنبيه غير موجود' });
+      const alert = alerts[0];
+
       await sql`UPDATE alerts SET status = COALESCE(${status}, status), action_taken = COALESCE(${action_taken}, action_taken), action_date = COALESCE(${action_date}, action_date) WHERE id = ${req.params.id}`;
+
+      // If marking as done with an action, mirror action into behavior's actions table
+      if (status === 'done' && action_taken && alert.trigger_behavior_ids) {
+        const ids = alert.trigger_behavior_ids.split(',').map(s => s.trim()).filter(Boolean);
+        const date = action_date || new Date().toISOString().split('T')[0];
+        const desc = `[${alert.level_name}] ${action_taken}`;
+        for (const bid of ids) {
+          try {
+            await sql`INSERT INTO actions (behavior_id, description, action_date) VALUES (${bid}, ${desc}, ${date})`;
+          } catch (e) { /* behavior may not exist — skip silently */ }
+        }
+      }
+
       res.json({ message: 'تم التحديث' });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });

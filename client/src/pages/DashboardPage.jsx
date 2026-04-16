@@ -62,7 +62,7 @@ export default function DashboardPage() {
     { value: overview?.total_circles || 0, label: 'الحلقات', color: '#7B1FA2', bg: '#F3E5F5', icon: FiBookOpen },
     { value: overview?.positive_behaviors || 0, label: 'إيجابي', color: '#2E7D32', bg: '#E8F5E9', icon: FiThumbsUp },
     { value: overview?.negative_behaviors || 0, label: 'سلبي', color: '#D32F2F', bg: '#FFEBEE', icon: FiThumbsDown },
-    { value: overview?.pending_alerts || 0, label: 'تنبيهات معلقة', color: '#F57C00', bg: '#FFF3E0', icon: FiAlertTriangle, onClick: () => navigate('/alerts') },
+    { value: overview?.pending_alerts || 0, label: 'تنبيهات معلقة', color: '#F57C00', bg: '#FFF3E0', icon: FiAlertTriangle, onClick: () => navigate('/records') },
   ]
 
   return (
@@ -71,7 +71,7 @@ export default function DashboardPage() {
 
       {/* Pending Alerts Banner */}
       {overview?.pending_alerts > 0 && (
-        <div onClick={() => navigate('/alerts')} className="card" style={{
+        <div onClick={() => navigate('/records')} className="card" style={{
           background: 'linear-gradient(135deg, #FFF3E0, #FFECB3)', border: '2px solid #FFE082',
           marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 10, flexWrap: 'wrap'

@@ -106,6 +106,10 @@ module.exports = function(sql) {
 
   router.delete('/:id', async (req, res) => {
     try {
+      const bid = String(req.params.id);
+      // Cascade delete: remove alerts that were triggered by this behavior
+      await sql`DELETE FROM alerts WHERE trigger_behavior_ids = ${bid} OR trigger_behavior_ids LIKE ${bid + ',%'} OR trigger_behavior_ids LIKE ${'%,' + bid} OR trigger_behavior_ids LIKE ${'%,' + bid + ',%'}`;
+      // Then delete the behavior (actions cascade by FK)
       await sql`DELETE FROM behaviors WHERE id = ${req.params.id}`;
       res.json({ message: 'تم الحذف' });
     } catch (err) { res.status(500).json({ error: err.message }); }

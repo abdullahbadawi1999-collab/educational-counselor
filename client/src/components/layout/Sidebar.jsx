@@ -6,7 +6,7 @@ const navItems = [
   { path: '/circles', label: 'الحلقات', icon: FiBookOpen },
   { path: '/students', label: 'الطلاب', icon: FiUsers },
   { path: '/behaviors/new', label: 'تسجيل سلوك', icon: FiPlusCircle },
-  { path: '/alerts', label: 'التنبيهات والإنذارات', icon: FiAlertTriangle },
+  { path: '/records', label: 'سجل المخالفات', icon: FiAlertTriangle },
 ]
 
 export default function Sidebar({ isOpen, onClose }) {
