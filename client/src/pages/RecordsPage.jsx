@@ -55,6 +55,7 @@ export default function RecordsPage({ showToast }) {
         student_id: b.student_id,
         student_name: b.student_name,
         circle_name: b.circle_name,
+        teacher_name: b.teacher_name,
         circle_id: b.circle_id,
         type: b.type, // positive/negative
         category: b.behavior_type_name,
@@ -74,6 +75,7 @@ export default function RecordsPage({ showToast }) {
         student_id: a.student_id,
         student_name: a.student_name,
         circle_name: a.circle_name,
+        teacher_name: a.teacher_name,
         level: a.level,
         level_name: a.level_name,
         description: a.reason,
@@ -218,9 +220,9 @@ export default function RecordsPage({ showToast }) {
           <option value="done">تم الإجراء</option>
         </select>
         <select className="form-control" value={filterCircle} onChange={e => setFilterCircle(e.target.value)}
-          style={{ width: 'auto', minWidth: 140 }}>
+          style={{ width: 'auto', minWidth: 180 }}>
           <option value="">جميع الحلقات</option>
-          {circles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {circles.map(c => <option key={c.id} value={c.id}>{c.name} — {c.teacher_name}</option>)}
         </select>
         <select className="form-control" value={sortBy} onChange={e => setSortBy(e.target.value)}
           style={{ width: 'auto', minWidth: 160 }}>
@@ -276,7 +278,9 @@ export default function RecordsPage({ showToast }) {
 
                     <div onClick={() => navigate(`/students/${item.student_id}`)} style={{ cursor: 'pointer', marginBottom: 6 }}>
                       <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--primary)' }}>{item.student_name}</span>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>{item.circle_name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>
+                        {item.circle_name}{item.teacher_name ? ` — ${item.teacher_name}` : ''}
+                      </div>
                     </div>
 
                     <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-primary)', marginBottom: 6 }}>
@@ -349,7 +353,9 @@ export default function RecordsPage({ showToast }) {
 
                     <div onClick={() => navigate(`/students/${item.student_id}`)} style={{ cursor: 'pointer', marginBottom: 6 }}>
                       <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--primary)' }}>{item.student_name}</span>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>{item.circle_name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>
+                        {item.circle_name}{item.teacher_name ? ` — ${item.teacher_name}` : ''}
+                      </div>
                     </div>
 
                     <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-primary)' }}>

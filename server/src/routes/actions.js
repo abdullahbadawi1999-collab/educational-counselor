@@ -20,6 +20,21 @@ module.exports = function(sql) {
     if (!behavior_id || !description || !action_date) return res.status(400).json({ error: 'السلوك والوصف والتاريخ مطلوبين' });
     try {
       const result = await sql`INSERT INTO actions (behavior_id, description, action_date) VALUES (${behavior_id}, ${description}, ${action_date}) RETURNING id`;
+
+      // Reverse sync: mark any pending alerts triggered by this behavior as done
+      const bid = String(behavior_id);
+      try {
+        await sql`UPDATE alerts
+          SET status = 'done',
+              action_taken = COALESCE(action_taken, ${description}),
+              action_date = COALESCE(action_date, ${action_date})
+          WHERE status = 'pending'
+            AND (trigger_behavior_ids = ${bid}
+              OR trigger_behavior_ids LIKE ${bid + ',%'}
+              OR trigger_behavior_ids LIKE ${'%,' + bid}
+              OR trigger_behavior_ids LIKE ${'%,' + bid + ',%'})`;
+      } catch (e) { console.error('Alert sync failed:', e.message); }
+
       res.status(201).json({ id: result[0].id, behavior_id, description, action_date });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });

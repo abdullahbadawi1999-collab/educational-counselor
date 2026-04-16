@@ -6,18 +6,19 @@ module.exports = function(sql) {
     const { student_id, level, status } = req.query;
     try {
       let alerts;
+      const baseSelect = 'a.*, s.name as student_name, c.name as circle_name, c.teacher_name';
       if (student_id && level && status) {
-        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.student_id = ${student_id} AND a.level = ${level} AND a.status = ${status} ORDER BY a.created_at DESC`;
+        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name, c.teacher_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.student_id = ${student_id} AND a.level = ${level} AND a.status = ${status} ORDER BY a.created_at DESC`;
       } else if (student_id) {
-        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.student_id = ${student_id} ORDER BY a.created_at DESC`;
+        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name, c.teacher_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.student_id = ${student_id} ORDER BY a.created_at DESC`;
       } else if (level && status) {
-        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.level = ${level} AND a.status = ${status} ORDER BY a.created_at DESC`;
+        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name, c.teacher_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.level = ${level} AND a.status = ${status} ORDER BY a.created_at DESC`;
       } else if (level) {
-        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.level = ${level} ORDER BY a.created_at DESC`;
+        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name, c.teacher_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.level = ${level} ORDER BY a.created_at DESC`;
       } else if (status) {
-        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.status = ${status} ORDER BY a.created_at DESC`;
+        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name, c.teacher_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id WHERE a.status = ${status} ORDER BY a.created_at DESC`;
       } else {
-        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id ORDER BY a.created_at DESC`;
+        alerts = await sql`SELECT a.*, s.name as student_name, c.name as circle_name, c.teacher_name FROM alerts a JOIN students s ON a.student_id = s.id JOIN circles c ON s.circle_id = c.id ORDER BY a.created_at DESC`;
       }
       const pendingResult = await sql`SELECT COUNT(*)::int as count FROM alerts WHERE status = 'pending'`;
       res.json({ alerts, pending_count: pendingResult[0].count });
@@ -52,14 +53,28 @@ module.exports = function(sql) {
       await sql`UPDATE alerts SET status = COALESCE(${status}, status), action_taken = COALESCE(${action_taken}, action_taken), action_date = COALESCE(${action_date}, action_date) WHERE id = ${req.params.id}`;
 
       // If marking as done with an action, mirror action into behavior's actions table
-      if (status === 'done' && action_taken && alert.trigger_behavior_ids) {
-        const ids = alert.trigger_behavior_ids.split(',').map(s => s.trim()).filter(Boolean);
+      if (status === 'done' && action_taken) {
         const date = action_date || new Date().toISOString().split('T')[0];
         const desc = `[${alert.level_name}] ${action_taken}`;
+
+        // Parse trigger behavior IDs; fall back to latest behavior by this student if missing
+        let ids = [];
+        if (alert.trigger_behavior_ids) {
+          ids = alert.trigger_behavior_ids.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        }
+
+        // Fallback: attach to the latest negative behavior of this student if no trigger ids
+        if (ids.length === 0 && alert.student_id) {
+          try {
+            const last = await sql`SELECT id FROM behaviors WHERE student_id = ${alert.student_id} AND type = 'negative' ORDER BY created_at DESC LIMIT 1`;
+            if (last.length) ids = [last[0].id];
+          } catch (e) { console.error('Fallback fetch failed:', e.message); }
+        }
+
         for (const bid of ids) {
           try {
             await sql`INSERT INTO actions (behavior_id, description, action_date) VALUES (${bid}, ${desc}, ${date})`;
-          } catch (e) { /* behavior may not exist — skip silently */ }
+          } catch (e) { console.error('Action insert failed for bid ' + bid + ':', e.message); }
         }
       }
 
