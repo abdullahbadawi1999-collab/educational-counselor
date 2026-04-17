@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FiSearch, FiPhone, FiDownload } from 'react-icons/fi'
-import { generateStudentPDF } from '../services/pdfExport'
+import { generateStudentExcel } from '../services/excelExport'
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
 import { useDebounce } from '../hooks/useApi'
@@ -58,10 +58,10 @@ export default function StudentsPage() {
             try {
               const scope = selectedCircle ? `circle&circle_id=${selectedCircle}` : 'all'
               const res = await api.get(`/reports/data?scope=${scope}`)
-              generateStudentPDF(res.data)
+              generateStudentExcel(res.data)
             } catch { alert('حدث خطأ في التصدير') }
           }}>
-            <FiDownload size={14} /> تصدير PDF
+            <FiDownload size={14} /> تصدير Excel
           </button>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function StudentsPage() {
               <thead>
                 <tr>
                   <th>الطالب</th>
-                  <th>المخالفات</th>
+                  <th>المخالفات المعلقة</th>
                   <th>موبايل الطالب</th>
                   <th>موبايل ولي الأمر</th>
                   <th>موبايل ولي الأمر 2</th>
@@ -115,27 +115,14 @@ export default function StudentsPage() {
                       <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{s.circle_name}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 1 }}>المعلم: {s.teacher_name}</div>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {(s.negative_count || 0) > 0 && (
-                          <span className="badge badge-negative" style={{ fontSize: 11 }}>
-                            ❌ {s.negative_count}
-                          </span>
-                        )}
-                        {(s.positive_count || 0) > 0 && (
-                          <span className="badge badge-positive" style={{ fontSize: 11 }}>
-                            ✅ {s.positive_count}
-                          </span>
-                        )}
-                        {(s.pending_alerts || 0) > 0 && (
-                          <span className="badge badge-pending" style={{ fontSize: 11 }}>
-                            ⏳ {s.pending_alerts}
-                          </span>
-                        )}
-                        {!s.negative_count && !s.positive_count && !s.pending_alerts && (
-                          <span style={{ fontSize: 11, color: 'var(--text-light)' }}>لا توجد</span>
-                        )}
-                      </div>
+                    <td style={{ minWidth: 180 }}>
+                      {s.pending_violations ? (
+                        <div style={{ fontSize: 12, color: '#D32F2F', fontWeight: 500, lineHeight: 1.6 }}>
+                          {s.pending_violations}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 12, color: 'var(--text-light)' }}>لا توجد مخالفات معلقة</span>
+                      )}
                     </td>
                     <td><PhoneLink phone={s.student_phone} /></td>
                     <td><PhoneLink phone={s.parent_phone_1} /></td>

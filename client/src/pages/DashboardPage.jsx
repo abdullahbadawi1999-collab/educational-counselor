@@ -15,7 +15,14 @@ export default function DashboardPage() {
   const [byMonth, setByMonth] = useState([])
   const [completion, setCompletion] = useState(null)
   const [recentBehaviors, setRecentBehaviors] = useState([])
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     api.get('/stats/overview').then(r => setOverview(r.data))
@@ -54,84 +61,100 @@ export default function DashboardPage() {
     datasets: [{ data: [completion?.with_actions || 0, completion?.without_actions || 0], backgroundColor: ['#1565C0', '#FFB74D'], borderWidth: 0 }]
   }
 
-  const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', rtl: true } } }
-  const barOptions = { ...chartOptions, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        rtl: true,
+        labels: { font: { size: isMobile ? 11 : 13 }, padding: isMobile ? 8 : 12 }
+      }
+    }
+  }
+  const barOptions = {
+    ...chartOptions,
+    indexAxis: 'y',
+    scales: {
+      x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: isMobile ? 10 : 12 } } },
+      y: { ticks: { font: { size: isMobile ? 10 : 12 } } }
+    }
+  }
 
   const stats = [
     { value: overview?.total_students || 0, label: 'الطلاب', color: '#1565C0', bg: '#E3F2FD', icon: FiUsers },
     { value: overview?.total_circles || 0, label: 'الحلقات', color: '#7B1FA2', bg: '#F3E5F5', icon: FiBookOpen },
     { value: overview?.positive_behaviors || 0, label: 'إيجابي', color: '#2E7D32', bg: '#E8F5E9', icon: FiThumbsUp },
     { value: overview?.negative_behaviors || 0, label: 'سلبي', color: '#D32F2F', bg: '#FFEBEE', icon: FiThumbsDown },
-    { value: overview?.pending_alerts || 0, label: 'تنبيهات معلقة', color: '#F57C00', bg: '#FFF3E0', icon: FiAlertTriangle, onClick: () => navigate('/records') },
+    { value: overview?.pending_alerts || 0, label: 'معلقة', color: '#F57C00', bg: '#FFF3E0', icon: FiAlertTriangle, onClick: () => navigate('/records') },
   ]
 
+  // Chart heights — smaller on mobile
+  const barHeight = isMobile ? Math.max(220, circleNames.length * 28) : Math.max(250, circleNames.length * 35)
+  const chartHeight = isMobile ? 220 : 250
+
   return (
-    <div>
-      <h1 className="page-title" style={{ marginBottom: 20 }}>لوحة التحكم</h1>
+    <div className="dashboard-page">
+      <h1 className="page-title" style={{ marginBottom: 16 }}>لوحة التحكم</h1>
 
       {/* Pending Alerts Banner */}
       {overview?.pending_alerts > 0 && (
-        <div onClick={() => navigate('/records')} className="card" style={{
-          background: 'linear-gradient(135deg, #FFF3E0, #FFECB3)', border: '2px solid #FFE082',
-          marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', gap: 10, flexWrap: 'wrap'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <FiAlertTriangle size={22} color="#F57C00" />
+        <div onClick={() => navigate('/records')} className="alerts-banner">
+          <div className="alerts-banner-content">
+            <FiAlertTriangle size={isMobile ? 20 : 22} color="#F57C00" style={{ flexShrink: 0 }} />
             <div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: '#E65100' }}>{overview.pending_alerts} تنبيه/إنذار بانتظار إجراءك</div>
-              <div style={{ fontSize: 12, color: '#BF360C' }}>اضغط هنا للمراجعة</div>
+              <div className="alerts-banner-title">
+                {overview.pending_alerts} تنبيه/إنذار بانتظار إجراءك
+              </div>
+              <div className="alerts-banner-sub">اضغط هنا للمراجعة</div>
             </div>
           </div>
-          <span style={{ fontSize: 18 }}>←</span>
         </div>
       )}
 
       {/* Stat Cards */}
       <div className="dashboard-stats">
         {stats.map((s, i) => (
-          <div key={i} className="stat-card" onClick={s.onClick} style={s.onClick ? { cursor: 'pointer' } : {}}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ background: s.bg, borderRadius: 10, padding: 8, flexShrink: 0 }}>
-                <s.icon size={18} color={s.color} />
-              </div>
-              <div>
-                <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
-                <div className="stat-label">{s.label}</div>
-              </div>
+          <div key={i} className="stat-card dash-stat" onClick={s.onClick} style={s.onClick ? { cursor: 'pointer' } : {}}>
+            <div className="dash-stat-icon" style={{ background: s.bg }}>
+              <s.icon size={isMobile ? 16 : 18} color={s.color} />
+            </div>
+            <div className="dash-stat-text">
+              <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
+              <div className="stat-label">{s.label}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Charts */}
-      <div className="grid-2" style={{ marginBottom: 20 }}>
+      <div className="grid-2" style={{ marginBottom: 16 }}>
         <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 15 }}>السلوكيات حسب الحلقة</h3>
-          <div style={{ height: Math.max(250, circleNames.length * 35) }}>
+          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>السلوكيات حسب الحلقة</h3>
+          <div style={{ height: barHeight, width: '100%' }}>
             {circleNames.length > 0 ? <Bar data={circleChartData} options={barOptions} /> :
-              <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 60 }}>لا توجد بيانات بعد</p>}
+              <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 40 }}>لا توجد بيانات بعد</p>}
           </div>
         </div>
         <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 15 }}>توزيع السلوكيات</h3>
-          <div style={{ height: 250, display: 'flex', justifyContent: 'center' }}>
+          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>توزيع السلوكيات</h3>
+          <div style={{ height: chartHeight, display: 'flex', justifyContent: 'center' }}>
             <Doughnut data={typeChartData} options={{ ...chartOptions, cutout: '60%' }} />
           </div>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginBottom: 20 }}>
+      <div className="grid-2" style={{ marginBottom: 16 }}>
         <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 15 }}>السلوكيات حسب الشهر</h3>
-          <div style={{ height: 250 }}>
+          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>السلوكيات حسب الشهر</h3>
+          <div style={{ height: chartHeight, width: '100%' }}>
             {months.length > 0 ? <Line data={monthChartData} options={chartOptions} /> :
-              <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 60 }}>لا توجد بيانات بعد</p>}
+              <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 40 }}>لا توجد بيانات بعد</p>}
           </div>
         </div>
         <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 15 }}>نسبة اتخاذ الإجراءات</h3>
-          <div style={{ height: 250, display: 'flex', justifyContent: 'center' }}>
+          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>نسبة اتخاذ الإجراءات</h3>
+          <div style={{ height: chartHeight, display: 'flex', justifyContent: 'center' }}>
             <Pie data={completionChartData} options={chartOptions} />
           </div>
         </div>
@@ -139,41 +162,72 @@ export default function DashboardPage() {
 
       {/* Recent Behaviors */}
       <div className="card">
-        <h3 style={{ marginBottom: 12, fontSize: 15 }}>آخر السلوكيات المسجلة</h3>
+        <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>آخر السلوكيات المسجلة</h3>
         {recentBehaviors.length > 0 ? (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>الطالب</th>
-                  <th>الحلقة</th>
-                  <th>النوع</th>
-                  <th>الوصف</th>
-                  <th>التاريخ</th>
-                  <th>الإجراء</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentBehaviors.map(b => (
-                  <tr key={b.id} onClick={() => navigate(`/students/${b.student_id}`)}>
-                    <td style={{ fontWeight: 600 }}>{b.student_name}</td>
-                    <td>{b.circle_name}</td>
-                    <td><span className={`badge badge-${b.type}`}>{b.type === 'positive' ? 'إيجابي' : 'سلبي'}</span></td>
-                    <td>{b.description}</td>
-                    <td style={{ direction: 'ltr', textAlign: 'right' }}>{b.date}</td>
-                    <td>
-                      {b.action_count > 0 ?
-                        <span className="badge badge-done">تم ({b.action_count})</span> :
-                        <span className="badge badge-pending">بانتظار</span>
-                      }
-                    </td>
+          isMobile ? (
+            // Mobile: card list instead of table
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {recentBehaviors.map(b => (
+                <div key={b.id} onClick={() => navigate(`/students/${b.student_id}`)} style={{
+                  padding: 10, borderRadius: 8, background: 'var(--bg)', cursor: 'pointer',
+                  borderRight: `3px solid ${b.type === 'positive' ? '#2E7D32' : '#D32F2F'}`
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, gap: 6 }}>
+                    <span style={{ fontWeight: 700, fontSize: 13 }}>{b.student_name}</span>
+                    <span className={`badge badge-${b.type}`} style={{ fontSize: 10 }}>
+                      {b.type === 'positive' ? 'إيجابي' : 'سلبي'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                    {b.circle_name}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>{b.description}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                    <span style={{ color: 'var(--text-light)', direction: 'ltr' }}>{b.date}</span>
+                    {b.action_count > 0 ?
+                      <span className="badge badge-done" style={{ fontSize: 10 }}>تم ({b.action_count})</span> :
+                      <span className="badge badge-pending" style={{ fontSize: 10 }}>بانتظار</span>
+                    }
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Desktop: table
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>الطالب</th>
+                    <th>الحلقة</th>
+                    <th>النوع</th>
+                    <th>الوصف</th>
+                    <th>التاريخ</th>
+                    <th>الإجراء</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recentBehaviors.map(b => (
+                    <tr key={b.id} onClick={() => navigate(`/students/${b.student_id}`)}>
+                      <td style={{ fontWeight: 600 }}>{b.student_name}</td>
+                      <td>{b.circle_name}</td>
+                      <td><span className={`badge badge-${b.type}`}>{b.type === 'positive' ? 'إيجابي' : 'سلبي'}</span></td>
+                      <td>{b.description}</td>
+                      <td style={{ direction: 'ltr', textAlign: 'right' }}>{b.date}</td>
+                      <td>
+                        {b.action_count > 0 ?
+                          <span className="badge badge-done">تم ({b.action_count})</span> :
+                          <span className="badge badge-pending">بانتظار</span>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : (
-          <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: 30 }}>لم يتم تسجيل أي سلوكيات بعد. ابدأ بتسجيل سلوك جديد.</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: 20 }}>لم يتم تسجيل أي سلوكيات بعد. ابدأ بتسجيل سلوك جديد.</p>
         )}
       </div>
     </div>

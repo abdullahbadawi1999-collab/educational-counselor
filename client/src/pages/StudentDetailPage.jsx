@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
-import { generateStudentPDF } from '../services/pdfExport'
+import { generateStudentExcel } from '../services/excelExport'
 
 const levelConfig = {
   1: { name: 'تنبيه', color: '#1565C0', bg: '#E3F2FD', icon: '📞' },
@@ -88,13 +88,13 @@ export default function StudentDetailPage({ showToast }) {
     } catch { showToast('حدث خطأ', 'error') }
   }
 
-  const handleExportPDF = async () => {
+  const handleExportExcel = async () => {
     try {
       const res = await api.get(`/reports/data?scope=student&student_id=${id}`)
-      generateStudentPDF(res.data)
+      generateStudentExcel(res.data)
       showToast('تم تصدير التقرير بنجاح')
     } catch (err) {
-      console.error('PDF export error:', err)
+      console.error('Excel export error:', err)
       showToast('حدث خطأ في التصدير', 'error')
     }
   }
@@ -165,8 +165,8 @@ export default function StudentDetailPage({ showToast }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-outline btn-sm" onClick={handleExportPDF}>
-            <FiDownload size={14} /> تصدير PDF
+          <button className="btn btn-outline btn-sm" onClick={handleExportExcel}>
+            <FiDownload size={14} /> تصدير Excel
           </button>
           <button className="btn btn-sm" onClick={openAiChat}
             style={{ background: '#7C3AED', color: 'white' }}>
