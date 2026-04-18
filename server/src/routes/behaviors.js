@@ -97,10 +97,56 @@ module.exports = function(sql) {
   }
 
   router.put('/:id', async (req, res) => {
-    const { type, description, date } = req.body;
+    const { type, description, date, behavior_type_id } = req.body;
     try {
-      await sql`UPDATE behaviors SET type = COALESCE(${type}, type), description = COALESCE(${description}, description), date = COALESCE(${date}, date) WHERE id = ${req.params.id}`;
-      res.json({ message: 'تم التحديث' });
+      // Fetch old state first
+      const oldRows = await sql`SELECT * FROM behaviors WHERE id = ${req.params.id}`;
+      if (!oldRows.length) return res.status(404).json({ error: 'السلوك غير موجود' });
+      const oldBehavior = oldRows[0];
+
+      // Detect meaningful changes that require alert recalculation
+      const newType = type !== undefined ? type : oldBehavior.type;
+      const newTypeId = behavior_type_id !== undefined ? (behavior_type_id || null) : oldBehavior.behavior_type_id;
+      const typeChanged = newType !== oldBehavior.type;
+      const btChanged = String(newTypeId || '') !== String(oldBehavior.behavior_type_id || '');
+      const needsRecalc = typeChanged || btChanged;
+
+      // Update the behavior row
+      await sql`UPDATE behaviors SET
+        type = COALESCE(${type}, type),
+        description = COALESCE(${description}, description),
+        date = COALESCE(${date}, date),
+        behavior_type_id = ${newTypeId}
+        WHERE id = ${req.params.id}`;
+
+      let removedAlertsCount = 0;
+      let generatedAlert = null;
+
+      if (needsRecalc) {
+        // 1) Remove alerts that were triggered by THIS specific behavior
+        const bid = String(req.params.id);
+        const deleted = await sql`DELETE FROM alerts
+          WHERE trigger_behavior_ids = ${bid}
+            OR trigger_behavior_ids LIKE ${bid + ',%'}
+            OR trigger_behavior_ids LIKE ${'%,' + bid}
+            OR trigger_behavior_ids LIKE ${'%,' + bid + ',%'}
+          RETURNING id`;
+        removedAlertsCount = deleted.length || 0;
+
+        // 2) If new state is a tracked negative violation, re-run escalation
+        if (newType === 'negative' && newTypeId) {
+          try {
+            generatedAlert = await checkCumulativeEscalation(sql, oldBehavior.student_id, newTypeId, parseInt(req.params.id));
+          } catch (err) { console.error('Escalation recalc error:', err.message); }
+        }
+      }
+
+      res.json({
+        message: 'تم التحديث',
+        recalculated: needsRecalc,
+        removed_alerts: removedAlertsCount,
+        generated_alert: generatedAlert
+      });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 

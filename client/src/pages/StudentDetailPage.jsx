@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX } from 'react-icons/fi'
+import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX, FiEdit2 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
 import { generateStudentExcel } from '../services/excelExport'
@@ -33,6 +33,10 @@ export default function StudentDetailPage({ showToast }) {
   const [aiMessages, setAiMessages] = useState([])
   const [aiInput, setAiInput] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [editBehavior, setEditBehavior] = useState(null) // behavior object being edited
+  const [behaviorTypes, setBehaviorTypes] = useState([])
+  const [editForm, setEditForm] = useState({ type: '', behavior_type_id: '', description: '', date: '' })
+  const [editSubmitting, setEditSubmitting] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -52,6 +56,57 @@ export default function StudentDetailPage({ showToast }) {
   }
 
   useEffect(() => { fetchData() }, [id])
+  useEffect(() => {
+    api.get('/behaviors/types').then(r => setBehaviorTypes(r.data)).catch(() => {})
+  }, [])
+
+  const openEditBehavior = (b) => {
+    setEditBehavior(b)
+    // Find behavior_type_id from list by matching name (since behavior endpoint returns behavior_type_name)
+    let btId = ''
+    if (b.behavior_type_name) {
+      const bt = behaviorTypes.find(t => t.name === b.behavior_type_name && t.type === b.type)
+      if (bt) btId = bt.id
+    }
+    setEditForm({
+      type: b.type,
+      behavior_type_id: btId,
+      description: b.description,
+      date: b.date
+    })
+  }
+
+  const handleEditSubmit = async () => {
+    if (!editForm.type || !editForm.description.trim() || !editForm.date) {
+      showToast('يرجى تعبئة جميع الحقول المطلوبة', 'error')
+      return
+    }
+    setEditSubmitting(true)
+    try {
+      const res = await api.put(`/behaviors/${editBehavior.id}`, {
+        type: editForm.type,
+        behavior_type_id: editForm.behavior_type_id || null,
+        description: editForm.description.trim(),
+        date: editForm.date
+      })
+      let msg = 'تم التحديث بنجاح'
+      if (res.data.recalculated) {
+        if (res.data.removed_alerts > 0) {
+          msg += ` — تم حذف ${res.data.removed_alerts} تنبيه مرتبط`
+        }
+        if (res.data.generated_alert) {
+          msg += ` — تم إنشاء ${res.data.generated_alert.level_name} جديد`
+        }
+      }
+      showToast(msg)
+      setEditBehavior(null)
+      fetchData()
+    } catch {
+      showToast('حدث خطأ في التحديث', 'error')
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
 
   const handleAddAction = async (behaviorId) => {
     if (!actionDesc.trim()) return
@@ -406,6 +461,10 @@ export default function StudentDetailPage({ showToast }) {
                     <button className="btn btn-outline btn-sm" onClick={() => { setShowActionModal(b.id); setActionDesc('') }}>
                       <FiPlus size={14} /> إجراء آخر
                     </button>
+                    <button className="btn btn-sm" style={{ color: '#1565C0', background: '#E3F2FD' }}
+                      onClick={() => openEditBehavior(b)}>
+                      <FiEdit2 size={14} />
+                    </button>
                     <button className="btn btn-sm" style={{ color: 'var(--danger)', background: 'var(--danger-light)' }}
                       onClick={() => handleDeleteBehavior(b.id)}>
                       <FiTrash2 size={14} />
@@ -479,6 +538,80 @@ export default function StudentDetailPage({ showToast }) {
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn btn-primary" onClick={() => handleAddAction(showActionModal)}><FiCheck size={16} /> حفظ</button>
               <button className="btn btn-outline" onClick={() => setShowActionModal(null)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Behavior Modal */}
+      {editBehavior && (
+        <div className="modal-overlay" onClick={() => setEditBehavior(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>تعديل السلوك</h2>
+              <button className="modal-close" onClick={() => setEditBehavior(null)}>&times;</button>
+            </div>
+
+            <div style={{ background: '#FFF3E0', border: '1px solid #FFE082', borderRadius: 8, padding: '10px 12px', marginBottom: 14, fontSize: 12, color: '#BF360C', lineHeight: 1.7 }}>
+              <FiAlertTriangle size={14} style={{ marginLeft: 4, verticalAlign: 'middle' }} />
+              عند تعديل نوع السلوك أو تصنيفه، سيتم إعادة حساب التنبيهات والإنذارات المرتبطة تلقائياً (إزالة القديمة وإضافة الجديدة إن لزم).
+            </div>
+
+            <div className="form-group">
+              <label>نوع السلوك</label>
+              <div className="type-selector">
+                <button
+                  type="button"
+                  className={`type-btn positive ${editForm.type === 'positive' ? 'active' : ''}`}
+                  onClick={() => setEditForm(f => ({ ...f, type: 'positive', behavior_type_id: '' }))}
+                >سلوك إيجابي</button>
+                <button
+                  type="button"
+                  className={`type-btn negative ${editForm.type === 'negative' ? 'active' : ''}`}
+                  onClick={() => setEditForm(f => ({ ...f, type: 'negative', behavior_type_id: '' }))}
+                >سلوك سلبي / مخالفة</button>
+              </div>
+            </div>
+
+            {editForm.type && (
+              <div className="form-group">
+                <label>التصنيف (حسب الميثاق)</label>
+                <select className="form-control" value={editForm.behavior_type_id}
+                  onChange={e => {
+                    const btId = e.target.value
+                    const bt = behaviorTypes.find(t => String(t.id) === String(btId))
+                    setEditForm(f => ({
+                      ...f,
+                      behavior_type_id: btId,
+                      description: bt ? bt.name : f.description
+                    }))
+                  }}>
+                  <option value="">— بدون تصنيف —</option>
+                  {behaviorTypes.filter(bt => bt.type === editForm.type).map(bt => (
+                    <option key={bt.id} value={bt.id}>{bt.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label>وصف السلوك</label>
+              <textarea className="form-control" rows={3}
+                value={editForm.description}
+                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+
+            <div className="form-group">
+              <label>التاريخ</label>
+              <input type="date" className="form-control" value={editForm.date}
+                onChange={e => setEditForm(f => ({ ...f, date: e.target.value }))} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-primary" onClick={handleEditSubmit} disabled={editSubmitting}>
+                <FiCheck size={16} /> {editSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+              </button>
+              <button className="btn btn-outline" onClick={() => setEditBehavior(null)}>إلغاء</button>
             </div>
           </div>
         </div>
