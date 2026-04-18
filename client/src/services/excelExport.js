@@ -1,10 +1,11 @@
 import * as XLSX from 'xlsx'
+import { formatArabicDate } from '../utils/dateFormat'
 
 // Export a report as xlsx with one sheet per student, plus summary sheet
 export function generateStudentExcel(reportData) {
   const { students, scope, circle, generated_at } = reportData
   const wb = XLSX.utils.book_new()
-  const dateStr = new Date(generated_at).toLocaleDateString('ar-EG')
+  const dateStr = formatArabicDate(generated_at)
 
   // ===== Summary sheet =====
   const summaryRows = [
@@ -50,7 +51,7 @@ export function generateStudentExcel(reportData) {
       const actions = (b.actions || [])
       if (actions.length === 0) {
         rows.push([
-          b.date || '-',
+          formatArabicDate(b.date) || '-',
           b.type === 'positive' ? 'إيجابي' : 'سلبي',
           b.behavior_type_name || '-',
           b.description || '-',
@@ -58,18 +59,16 @@ export function generateStudentExcel(reportData) {
           '-'
         ])
       } else {
-        // First row: behavior + first action
         rows.push([
-          b.date || '-',
+          formatArabicDate(b.date) || '-',
           b.type === 'positive' ? 'إيجابي' : 'سلبي',
           b.behavior_type_name || '-',
           b.description || '-',
           actions[0].description,
-          actions[0].action_date
+          formatArabicDate(actions[0].action_date)
         ])
-        // Extra actions on subsequent rows
         for (let i = 1; i < actions.length; i++) {
-          rows.push(['', '', '', '', actions[i].description, actions[i].action_date])
+          rows.push(['', '', '', '', actions[i].description, formatArabicDate(actions[i].action_date)])
         }
       }
     }
@@ -89,7 +88,7 @@ export function generateStudentExcel(reportData) {
         a.reason || '-',
         a.status === 'pending' ? 'بانتظار الإجراء' : 'تم الإجراء',
         a.action_taken || '-',
-        a.action_date || '-'
+        formatArabicDate(a.action_date) || '-'
       ])
     }
 

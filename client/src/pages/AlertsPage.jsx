@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiCheck, FiFilter, FiAlertTriangle, FiAlertCircle, FiXCircle, FiTrash2 } from 'react-icons/fi'
 import api from '../services/api'
+import { formatArabicDate } from '../utils/dateFormat'
 
 const levelConfig = {
   1: { name: 'تنبيه', color: '#1565C0', bg: '#E3F2FD', border: '#BBDEFB', icon: '📞' },
@@ -150,7 +151,7 @@ export default function AlertsPage({ showToast }) {
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{alert.created_at?.split('T')[0] || alert.created_at}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{formatArabicDate(alert.created_at)}</span>
                       <button onClick={async () => {
                         if (!confirm('هل أنت متأكد من حذف هذا التنبيه/الإنذار؟')) return
                         try {
@@ -185,7 +186,7 @@ export default function AlertsPage({ showToast }) {
                     }}>
                       <div style={{ fontSize: 12, color: '#2E7D32', fontWeight: 600, marginBottom: 2 }}>✅ الإجراء المتخذ:</div>
                       <div style={{ fontSize: 13 }}>{alert.action_taken}</div>
-                      {alert.action_date && <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{alert.action_date}</div>}
+                      {alert.action_date && <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{formatArabicDate(alert.action_date)}</div>}
                     </div>
                   )}
 

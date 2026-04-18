@@ -4,6 +4,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, P
 import { Bar, Doughnut, Line, Pie } from 'react-chartjs-2'
 import { FiUsers, FiBookOpen, FiThumbsUp, FiThumbsDown, FiAlertTriangle } from 'react-icons/fi'
 import api from '../services/api'
+import { formatArabicDate } from '../utils/dateFormat'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = 'Tajawal'
@@ -183,7 +184,7 @@ export default function DashboardPage() {
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>{b.description}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-                    <span style={{ color: 'var(--text-light)', direction: 'ltr' }}>{b.date}</span>
+                    <span style={{ color: 'var(--text-light)' }}>{formatArabicDate(b.date)}</span>
                     {b.action_count > 0 ?
                       <span className="badge badge-done" style={{ fontSize: 10 }}>تم ({b.action_count})</span> :
                       <span className="badge badge-pending" style={{ fontSize: 10 }}>بانتظار</span>
@@ -213,7 +214,7 @@ export default function DashboardPage() {
                       <td>{b.circle_name}</td>
                       <td><span className={`badge badge-${b.type}`}>{b.type === 'positive' ? 'إيجابي' : 'سلبي'}</span></td>
                       <td>{b.description}</td>
-                      <td style={{ direction: 'ltr', textAlign: 'right' }}>{b.date}</td>
+                      <td>{formatArabicDate(b.date)}</td>
                       <td>
                         {b.action_count > 0 ?
                           <span className="badge badge-done">تم ({b.action_count})</span> :

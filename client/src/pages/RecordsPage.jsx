@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiCheck, FiAlertTriangle, FiTrash2, FiFilter } from 'react-icons/fi'
 import api from '../services/api'
+import { formatArabicDate } from '../utils/dateFormat'
 
 const levelConfig = {
   1: { name: 'تنبيه', color: '#1565C0', bg: '#E3F2FD', border: '#BBDEFB', icon: '📞' },
@@ -268,7 +269,7 @@ export default function RecordsPage({ showToast }) {
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{item.date}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{formatArabicDate(item.date)}</span>
                         <button onClick={() => handleDeleteAlert(item.raw_id)}
                           style={{ background: 'none', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 4 }}>
                           <FiTrash2 size={15} />
@@ -291,7 +292,7 @@ export default function RecordsPage({ showToast }) {
                       <div style={{ background: '#E8F5E9', borderRadius: 8, padding: '8px 12px', marginTop: 6, borderRight: '3px solid #2E7D32' }}>
                         <div style={{ fontSize: 11, color: '#2E7D32', fontWeight: 600, marginBottom: 1 }}>✅ الإجراء المتخذ:</div>
                         <div style={{ fontSize: 13 }}>{item.action_taken}</div>
-                        {item.action_date && <div style={{ fontSize: 10, color: 'var(--text-light)', marginTop: 2 }}>{item.action_date}</div>}
+                        {item.action_date && <div style={{ fontSize: 10, color: 'var(--text-light)', marginTop: 2 }}>{formatArabicDate(item.action_date)}</div>}
                       </div>
                     )}
 
@@ -343,7 +344,7 @@ export default function RecordsPage({ showToast }) {
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{item.date}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{formatArabicDate(item.date)}</span>
                         <button onClick={() => handleDeleteBehavior(item.raw_id)}
                           style={{ background: 'none', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 4 }}>
                           <FiTrash2 size={15} />

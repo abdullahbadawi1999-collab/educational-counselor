@@ -4,6 +4,7 @@ import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, Fi
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
 import { generateStudentExcel } from '../services/excelExport'
+import { formatArabicDate } from '../utils/dateFormat'
 
 const levelConfig = {
   1: { name: 'تنبيه', color: '#1565C0', bg: '#E3F2FD', icon: '📞' },
@@ -420,7 +421,7 @@ export default function StudentDetailPage({ showToast }) {
                 </div>
                 <div style={{ fontSize: 13 }}>{alert.reason}</div>
                 {alert.action_taken && (
-                  <div style={{ fontSize: 12, color: '#2E7D32', marginTop: 4, fontWeight: 500 }}>✅ {alert.action_taken} {alert.action_date && `(${alert.action_date})`}</div>
+                  <div style={{ fontSize: 12, color: '#2E7D32', marginTop: 4, fontWeight: 500 }}>✅ {alert.action_taken} {alert.action_date && `(${formatArabicDate(alert.action_date)})`}</div>
                 )}
               </div>
             )
@@ -445,7 +446,7 @@ export default function StudentDetailPage({ showToast }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
                     <span className={`badge badge-${b.type}`}>{b.type === 'positive' ? 'إيجابي' : 'سلبي'}</span>
-                    <span className="timeline-date" style={{ marginRight: 12 }}><FiCalendar size={12} style={{ marginLeft: 4 }} />{b.date}</span>
+                    <span className="timeline-date" style={{ marginRight: 12 }}><FiCalendar size={12} style={{ marginLeft: 4 }} />{formatArabicDate(b.date)}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {QUICK_ACTIONS.map(qa => (
@@ -481,7 +482,7 @@ export default function StudentDetailPage({ showToast }) {
                       <div key={a.id} className="action-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <div style={{ fontWeight: 500 }}>{a.description}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{a.action_date}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{formatArabicDate(a.action_date)}</div>
                         </div>
                         <button onClick={async () => {
                           if (!confirm('هل أنت متأكد من حذف هذا الإجراء؟')) return
