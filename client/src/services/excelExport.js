@@ -1,120 +1,63 @@
 import * as XLSX from 'xlsx'
 import { formatArabicDate } from '../utils/dateFormat'
 
-// Export a report as xlsx with one sheet per student, plus summary sheet
+/**
+ * Build flat report rows of the form:
+ *   [student_name, circle, teacher, violation, violation_date, action_taken, action_date]
+ * One row per (behavior, action) pair. If a behavior has no action → single row
+ * with empty action fields. Only negative behaviors (violations) are included.
+ */
+function buildFlatRows(students) {
+  const rows = []
+  for (const s of students) {
+    const violations = (s.behaviors || []).filter(b => b.type === 'negative')
+    if (violations.length === 0) {
+      // Still list the student so the report shows them
+      rows.push([s.name, s.circle_name || '-', s.teacher_name || '-', 'لا توجد مخالفات', '-', '-', '-'])
+      continue
+    }
+    for (const b of violations) {
+      const vDate = formatArabicDate(b.date)
+      const vName = b.behavior_type_name || b.description || '-'
+      const actions = b.actions || []
+      if (actions.length === 0) {
+        rows.push([s.name, s.circle_name || '-', s.teacher_name || '-', vName, vDate, 'لم يتم اتخاذ إجراء', '-'])
+      } else {
+        for (const a of actions) {
+          rows.push([s.name, s.circle_name || '-', s.teacher_name || '-', vName, vDate, a.description || '-', formatArabicDate(a.action_date)])
+        }
+      }
+    }
+  }
+  return rows
+}
+
 export function generateStudentExcel(reportData) {
   const { students, scope, circle, generated_at } = reportData
   const wb = XLSX.utils.book_new()
   const dateStr = formatArabicDate(generated_at)
 
-  // ===== Summary sheet =====
-  const summaryRows = [
-    ['تقرير السجل السلوكي للطلاب'],
-    ['الماهر بالقرآن — الموجه التربوي'],
-    ['التاريخ:', dateStr],
+  const headers = ['الطالب', 'الحلقة', 'المعلم', 'المخالفة', 'تاريخ المخالفة', 'الإجراء المتخذ', 'تاريخ الإجراء']
+
+  const topRows = [
+    ['تقرير السجل السلوكي — الماهر بالقرآن'],
+    ['الموجه التربوي'],
+    ['تاريخ التقرير:', dateStr],
     circle ? ['الحلقة:', circle.name, 'المعلم:', circle.teacher_name] : [],
     [],
-    ['الطالب', 'الحلقة', 'المعلم', 'إيجابيات', 'سلبيات', 'تنبيهات/إنذارات', 'معلقة'],
+    headers
   ].filter(r => r.length > 0)
 
-  for (const s of students) {
-    const pos = (s.behaviors || []).filter(b => b.type === 'positive').length
-    const neg = (s.behaviors || []).filter(b => b.type === 'negative').length
-    const alerts = (s.alerts || []).length
-    const pending = (s.alerts || []).filter(a => a.status === 'pending').length
-    summaryRows.push([s.name, s.circle_name, s.teacher_name, pos, neg, alerts, pending])
-  }
+  const dataRows = buildFlatRows(students)
+  const allRows = [...topRows, ...dataRows]
 
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows)
-  summarySheet['!cols'] = [
-    { wch: 30 }, { wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 10 }
+  const ws = XLSX.utils.aoa_to_sheet(allRows)
+  ws['!cols'] = [
+    { wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 30 }, { wch: 18 }, { wch: 35 }, { wch: 18 }
   ]
-  summarySheet['!rtl'] = true
-  XLSX.utils.book_append_sheet(wb, summarySheet, 'الملخص')
+  ws['!rtl'] = true
+  XLSX.utils.book_append_sheet(wb, ws, 'التقرير')
 
-  // ===== Per-student sheets =====
-  for (const student of students) {
-    const rows = [
-      [student.name],
-      ['الحلقة:', student.circle_name, 'المعلم:', student.teacher_name],
-      [
-        'الهاتف:', student.student_phone || '-',
-        'ولي الأمر 1:', student.parent_phone_1 || '-',
-        'ولي الأمر 2:', student.parent_phone_2 || '-'
-      ],
-      [],
-      ['== السلوكيات =='],
-      ['التاريخ', 'النوع', 'التصنيف', 'الوصف', 'الإجراءات المتخذة', 'تاريخ الإجراء']
-    ]
-
-    for (const b of (student.behaviors || [])) {
-      const actions = (b.actions || [])
-      if (actions.length === 0) {
-        rows.push([
-          formatArabicDate(b.date) || '-',
-          b.type === 'positive' ? 'إيجابي' : 'سلبي',
-          b.behavior_type_name || '-',
-          b.description || '-',
-          'لم يتم اتخاذ إجراء',
-          '-'
-        ])
-      } else {
-        rows.push([
-          formatArabicDate(b.date) || '-',
-          b.type === 'positive' ? 'إيجابي' : 'سلبي',
-          b.behavior_type_name || '-',
-          b.description || '-',
-          actions[0].description,
-          formatArabicDate(actions[0].action_date)
-        ])
-        for (let i = 1; i < actions.length; i++) {
-          rows.push(['', '', '', '', actions[i].description, formatArabicDate(actions[i].action_date)])
-        }
-      }
-    }
-
-    if ((student.behaviors || []).length === 0) {
-      rows.push(['لا توجد سلوكيات مسجلة'])
-    }
-
-    // Alerts section
-    rows.push([])
-    rows.push(['== التنبيهات والإنذارات =='])
-    rows.push(['المستوى', 'السبب', 'الحالة', 'الإجراء المتخذ', 'تاريخ الإجراء'])
-
-    for (const a of (student.alerts || [])) {
-      rows.push([
-        a.level_name || '-',
-        a.reason || '-',
-        a.status === 'pending' ? 'بانتظار الإجراء' : 'تم الإجراء',
-        a.action_taken || '-',
-        formatArabicDate(a.action_date) || '-'
-      ])
-    }
-
-    if ((student.alerts || []).length === 0) {
-      rows.push(['لا توجد تنبيهات'])
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet(rows)
-    ws['!cols'] = [
-      { wch: 14 }, { wch: 12 }, { wch: 25 }, { wch: 40 }, { wch: 40 }, { wch: 14 }
-    ]
-    ws['!rtl'] = true
-
-    // Sheet name - max 31 chars, no special chars
-    let sheetName = student.name.substring(0, 30).replace(/[\\\/\*\?\[\]]/g, '')
-    // Ensure unique sheet names
-    let counter = 1
-    let finalName = sheetName
-    while (wb.SheetNames.includes(finalName)) {
-      finalName = sheetName.substring(0, 27) + '_' + counter
-      counter++
-    }
-    XLSX.utils.book_append_sheet(wb, ws, finalName)
-  }
-
-  // File name
   const fileName = scope === 'student' && students[0]
     ? `تقرير_${students[0].name.replace(/\s+/g, '_').substring(0, 30)}.xlsx`
     : scope === 'circle' && circle
@@ -123,3 +66,6 @@ export function generateStudentExcel(reportData) {
 
   XLSX.writeFile(wb, fileName)
 }
+
+// Also export the helper so the PDF service can reuse it
+export { buildFlatRows }

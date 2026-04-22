@@ -76,20 +76,18 @@ module.exports = function(sql) {
       return { level, level_name: names[level], reason: btName + ' — إنذار فوري' };
     }
 
-    const cycleLength = rule.decision_at || rule.warning_at || rule.alert_at || 0;
-    if (!cycleLength) return null;
-    const posInCycle = ((count - 1) % cycleLength) + 1;
-    const cycleNum = Math.ceil(count / cycleLength);
-
-    if (rule.decision_at && posInCycle === rule.decision_at) {
-      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 3, 'قرار', ${btName + ' — تكررت ' + count + ' مرات — يُحال للمشرفين (الدورة ' + cycleNum + ')'}, ${String(behaviorId)}, 'auto')`;
+    // Non-cycling escalation: once decision threshold is reached, every
+    // additional violation stays at قرار. Warning and alert levels fire
+    // only exactly once at their thresholds before decision is reached.
+    if (rule.decision_at && count >= rule.decision_at) {
+      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 3, 'قرار', ${btName + ' — تكررت ' + count + ' مرات — يُحال للمشرفين لاتخاذ القرار'}, ${String(behaviorId)}, 'auto')`;
       return { level: 3, level_name: 'قرار', reason: btName + ' تكررت ' + count + ' مرات' };
     }
-    if (rule.warning_at && posInCycle === rule.warning_at) {
+    if (rule.warning_at && count === rule.warning_at) {
       await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 2, 'إنذار', ${btName + ' — تكررت ' + count + ' مرات — إنذار رسمي حسب الميثاق'}, ${String(behaviorId)}, 'auto')`;
       return { level: 2, level_name: 'إنذار', reason: btName + ' تكررت ' + count + ' مرات' };
     }
-    if (rule.alert_at && posInCycle === rule.alert_at) {
+    if (rule.alert_at && count === rule.alert_at) {
       await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 1, 'تنبيه', ${btName + ' — تكررت ' + count + ' مرة — تواصل مع ولي الأمر'}, ${String(behaviorId)}, 'auto')`;
       return { level: 1, level_name: 'تنبيه', reason: btName + ' تكررت ' + count + ' مرة' };
     }

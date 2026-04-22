@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX, FiEdit2 } from 'react-icons/fi'
+import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX, FiEdit2, FiFileText } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
 import { generateStudentExcel } from '../services/excelExport'
+import { generateStudentPDF } from '../services/pdfExport'
 import { formatArabicDate } from '../utils/dateFormat'
 
 const levelConfig = {
@@ -30,6 +31,7 @@ export default function StudentDetailPage({ showToast }) {
   const [actionDate, setActionDate] = useState(new Date().toISOString().split('T')[0])
   const [showAlertActionModal, setShowAlertActionModal] = useState(null)
   const [alertActionText, setAlertActionText] = useState('')
+  const [editActionModal, setEditActionModal] = useState(null) // { id, description, action_date }
   const [showAiChat, setShowAiChat] = useState(false)
   const [aiMessages, setAiMessages] = useState([])
   const [aiInput, setAiInput] = useState('')
@@ -155,6 +157,26 @@ export default function StudentDetailPage({ showToast }) {
     }
   }
 
+  const handleExportPDF = async () => {
+    try {
+      const res = await api.get(`/reports/data?scope=student&student_id=${id}`)
+      await generateStudentPDF(res.data)
+      showToast('تم تصدير التقرير بنجاح')
+    } catch (err) {
+      console.error('PDF export error:', err)
+      showToast('حدث خطأ في التصدير', 'error')
+    }
+  }
+
+  const handleRecalculate = async () => {
+    if (!confirm('سيتم إعادة حساب التنبيهات والإنذارات حسب قواعد الميثاق. متابعة؟')) return
+    try {
+      const res = await api.post(`/alerts/recalculate/${id}`)
+      showToast(`تم إعادة الحساب (${res.data.regenerated} سجل)`)
+      fetchData()
+    } catch { showToast('حدث خطأ', 'error') }
+  }
+
   const openAiChat = () => {
     setShowAiChat(true)
     if (aiMessages.length === 0) {
@@ -222,7 +244,10 @@ export default function StudentDetailPage({ showToast }) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-outline btn-sm" onClick={handleExportExcel}>
-            <FiDownload size={14} /> تصدير Excel
+            <FiDownload size={14} /> Excel
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={handleExportPDF}>
+            <FiFileText size={14} /> PDF
           </button>
           <button className="btn btn-sm" onClick={openAiChat}
             style={{ background: '#7C3AED', color: 'white' }}>
@@ -479,21 +504,29 @@ export default function StudentDetailPage({ showToast }) {
                       <FiCheck size={14} style={{ marginLeft: 4 }} />الإجراءات المتخذة:
                     </div>
                     {b.actions.map(a => (
-                      <div key={a.id} className="action-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
+                      <div key={a.id} className="action-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 500 }}>{a.description}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>{formatArabicDate(a.action_date)}</div>
                         </div>
-                        <button onClick={async () => {
-                          if (!confirm('هل أنت متأكد من حذف هذا الإجراء؟')) return
-                          try {
-                            await api.delete(`/actions/${a.id}`)
-                            showToast('تم حذف الإجراء')
-                            fetchData()
-                          } catch { showToast('حدث خطأ', 'error') }
-                        }} style={{ background: 'none', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 4, flexShrink: 0 }}>
-                          <FiTrash2 size={14} />
-                        </button>
+                        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                          <button onClick={() => setEditActionModal({ id: a.id, description: a.description, action_date: a.action_date })}
+                            style={{ background: 'var(--info-light)', border: 'none', color: 'var(--info)', cursor: 'pointer', padding: 6, borderRadius: 6 }}
+                            title="تعديل">
+                            <FiEdit2 size={13} />
+                          </button>
+                          <button onClick={async () => {
+                            if (!confirm('هل أنت متأكد من حذف هذا الإجراء؟')) return
+                            try {
+                              await api.delete(`/actions/${a.id}`)
+                              showToast('تم حذف الإجراء')
+                              fetchData()
+                            } catch { showToast('حدث خطأ', 'error') }
+                          }} style={{ background: 'var(--danger-light)', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 6, borderRadius: 6 }}
+                            title="حذف">
+                            <FiTrash2 size={13} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -613,6 +646,56 @@ export default function StudentDetailPage({ showToast }) {
                 <FiCheck size={16} /> {editSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
               </button>
               <button className="btn btn-outline" onClick={() => setEditBehavior(null)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Action Modal */}
+      {editActionModal && (
+        <div className="modal-overlay" onClick={() => setEditActionModal(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>تعديل الإجراء المتخذ</h2>
+              <button className="modal-close" onClick={() => setEditActionModal(null)}>&times;</button>
+            </div>
+            <div className="form-group">
+              <label>إجراء سريع</label>
+              <div className="chip-group">
+                {QUICK_ACTIONS.map(qa => (
+                  <button key={qa} className={`chip ${editActionModal.description === qa ? 'active' : ''}`}
+                    onClick={() => setEditActionModal({ ...editActionModal, description: qa })}>{qa}</button>
+                ))}
+              </div>
+            </div>
+            <div className="form-group">
+              <label>وصف الإجراء</label>
+              <textarea className="form-control" rows={3}
+                value={editActionModal.description}
+                onChange={e => setEditActionModal({ ...editActionModal, description: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>تاريخ الإجراء</label>
+              <input type="date" className="form-control"
+                value={editActionModal.action_date}
+                onChange={e => setEditActionModal({ ...editActionModal, action_date: e.target.value })} />
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-primary" onClick={async () => {
+                if (!editActionModal.description?.trim()) return
+                try {
+                  await api.put(`/actions/${editActionModal.id}`, {
+                    description: editActionModal.description.trim(),
+                    action_date: editActionModal.action_date
+                  })
+                  showToast('تم تحديث الإجراء')
+                  setEditActionModal(null)
+                  fetchData()
+                } catch { showToast('حدث خطأ', 'error') }
+              }}>
+                <FiCheck size={16} /> حفظ
+              </button>
+              <button className="btn btn-outline" onClick={() => setEditActionModal(null)}>إلغاء</button>
             </div>
           </div>
         </div>

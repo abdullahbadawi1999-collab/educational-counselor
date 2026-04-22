@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { FiSearch, FiPhone, FiDownload } from 'react-icons/fi'
+import { FiSearch, FiPhone, FiDownload, FiFileText } from 'react-icons/fi'
 import { generateStudentExcel } from '../services/excelExport'
+import { generateStudentPDF } from '../services/pdfExport'
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
 import { useDebounce } from '../hooks/useApi'
@@ -61,7 +62,16 @@ export default function StudentsPage() {
               generateStudentExcel(res.data)
             } catch { alert('حدث خطأ في التصدير') }
           }}>
-            <FiDownload size={14} /> تصدير Excel
+            <FiDownload size={14} /> Excel
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={async () => {
+            try {
+              const scope = selectedCircle ? `circle&circle_id=${selectedCircle}` : 'all'
+              const res = await api.get(`/reports/data?scope=${scope}`)
+              await generateStudentPDF(res.data)
+            } catch (err) { console.error(err); alert('حدث خطأ في التصدير') }
+          }}>
+            <FiFileText size={14} /> PDF
           </button>
         </div>
       </div>

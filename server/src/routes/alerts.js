@@ -89,6 +89,71 @@ module.exports = function(sql) {
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
+  // POST /alerts/recalculate/:studentId — wipe auto-generated alerts for a student
+  // and regenerate them sequentially from the student's negative behaviors.
+  router.post('/recalculate/:studentId', async (req, res) => {
+    const studentId = parseInt(req.params.studentId);
+    try {
+      // 1) Delete all auto alerts for this student (preserve manual ones)
+      await sql`DELETE FROM alerts WHERE student_id = ${studentId} AND trigger_type = 'auto'`;
+
+      // 2) Get all negative behaviors ordered by creation
+      const behaviors = await sql`SELECT b.id, b.behavior_type_id, b.student_id, bt.name as bt_name, bt.escalation_rule
+        FROM behaviors b
+        LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id
+        WHERE b.student_id = ${studentId} AND b.type = 'negative' AND b.behavior_type_id IS NOT NULL
+        ORDER BY b.created_at ASC, b.id ASC`;
+
+      // 3) Per-type counts and replay escalation
+      const counts = {}; // behavior_type_id -> count so far
+      let regenerated = 0;
+      for (const b of behaviors) {
+        if (!b.escalation_rule) continue;
+        const rule = JSON.parse(b.escalation_rule);
+        counts[b.behavior_type_id] = (counts[b.behavior_type_id] || 0) + 1;
+        const count = counts[b.behavior_type_id];
+        const btName = b.bt_name;
+
+        if (rule.immediate_warning) {
+          const level = rule.immediate_warning;
+          const names = { 1: 'تنبيه', 2: 'إنذار', 3: 'قرار' };
+          await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, ${level}, ${names[level]}, ${btName + ' — إنذار فوري حسب الميثاق (المرة ' + count + ')'}, ${String(b.id)}, 'auto')`;
+          regenerated++;
+          continue;
+        }
+        if (rule.decision_at && count >= rule.decision_at) {
+          await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 3, 'قرار', ${btName + ' — تكررت ' + count + ' مرات — يُحال للمشرفين لاتخاذ القرار'}, ${String(b.id)}, 'auto')`;
+          regenerated++;
+        } else if (rule.warning_at && count === rule.warning_at) {
+          await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 2, 'إنذار', ${btName + ' — تكررت ' + count + ' مرات — إنذار رسمي حسب الميثاق'}, ${String(b.id)}, 'auto')`;
+          regenerated++;
+        } else if (rule.alert_at && count === rule.alert_at) {
+          await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 1, 'تنبيه', ${btName + ' — تكررت ' + count + ' مرة — تواصل مع ولي الأمر'}, ${String(b.id)}, 'auto')`;
+          regenerated++;
+        }
+      }
+
+      // 4) Re-apply any existing actions as "done" status on matching alerts
+      const actions = await sql`SELECT a.description, a.action_date, b.id as bid
+        FROM actions a JOIN behaviors b ON a.behavior_id = b.id
+        WHERE b.student_id = ${studentId}`;
+      for (const a of actions) {
+        const bidStr = String(a.bid);
+        await sql`UPDATE alerts
+          SET status = 'done',
+              action_taken = COALESCE(action_taken, ${a.description}),
+              action_date = COALESCE(action_date, ${a.action_date})
+          WHERE status = 'pending'
+            AND (trigger_behavior_ids = ${bidStr}
+              OR trigger_behavior_ids LIKE ${bidStr + ',%'}
+              OR trigger_behavior_ids LIKE ${'%,' + bidStr}
+              OR trigger_behavior_ids LIKE ${'%,' + bidStr + ',%'})`;
+      }
+
+      res.json({ message: 'تم إعادة حساب التنبيهات', regenerated });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
   router.get('/escalation/:studentId', async (req, res) => {
     try {
       const behaviorCounts = await sql`SELECT bt.id as type_id, bt.name, bt.category, bt.severity, bt.escalation_rule, COUNT(b.id)::int as count FROM behaviors b JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${req.params.studentId} AND b.type = 'negative' GROUP BY bt.id, bt.name, bt.category, bt.severity, bt.escalation_rule`;
