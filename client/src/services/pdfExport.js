@@ -39,33 +39,45 @@ export function generateStudentPDF(reportData) {
     }
   }
 
+  // Landscape A4 = 297mm x 210mm. With 8mm side margins, content ≈ 281mm.
+  // At ~3.78px/mm, container width should be ~1060px to map cleanly.
   const html = `
   <div id="pdf-report" dir="rtl" lang="ar" style="
     font-family: 'Tajawal', 'Cairo', 'Amiri', Arial, sans-serif;
-    padding: 24px;
+    padding: 14px 18px;
     color: #1a1a2e;
-    font-size: 12px;
-    line-height: 1.6;
+    font-size: 11px;
+    line-height: 1.55;
     background: white;
-    width: 780px;
+    width: 1060px;
+    box-sizing: border-box;
   ">
-    <div style="text-align:center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #1B6B4A;">
-      <div style="font-size: 22px; font-weight: 800; color: #1B6B4A; margin-bottom: 4px;">تقرير السجل السلوكي</div>
-      <div style="font-size: 13px; color: #555;">الماهر بالقرآن — الموجه التربوي</div>
-      <div style="font-size: 11px; color: #777; margin-top: 4px;">تاريخ التقرير: ${escapeHtml(dateStr)}</div>
-      ${circle ? `<div style="font-size: 12px; color: #1B6B4A; margin-top: 6px; font-weight: 600;">الحلقة: ${escapeHtml(circle.name)} — المعلم: ${escapeHtml(circle.teacher_name)}</div>` : ''}
+    <div style="text-align:center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1B6B4A;">
+      <div style="font-size: 20px; font-weight: 800; color: #1B6B4A; margin-bottom: 2px;">تقرير السجل السلوكي</div>
+      <div style="font-size: 12px; color: #555;">الماهر بالقرآن — الموجه التربوي</div>
+      <div style="font-size: 10px; color: #777; margin-top: 2px;">تاريخ التقرير: ${escapeHtml(dateStr)}</div>
+      ${circle ? `<div style="font-size: 11px; color: #1B6B4A; margin-top: 4px; font-weight: 600;">الحلقة: ${escapeHtml(circle.name)} — المعلم: ${escapeHtml(circle.teacher_name)}</div>` : ''}
     </div>
 
-    <table style="width:100%; border-collapse: collapse; font-size: 11px;">
+    <table style="width:100%; border-collapse: collapse; font-size: 10.5px; table-layout: fixed;">
+      <colgroup>
+        <col style="width: 16%;" />
+        <col style="width: 12%;" />
+        <col style="width: 12%;" />
+        <col style="width: 18%;" />
+        <col style="width: 12%;" />
+        <col style="width: 18%;" />
+        <col style="width: 12%;" />
+      </colgroup>
       <thead>
         <tr style="background: #1B6B4A; color: white;">
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">الطالب</th>
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">الحلقة</th>
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">المعلم</th>
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">المخالفة</th>
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">تاريخ المخالفة</th>
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">الإجراء المتخذ</th>
-          <th style="padding: 8px 6px; border: 1px solid #145236; text-align: center; font-weight: 700;">تاريخ الإجراء</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">الطالب</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">الحلقة</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">المعلم</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">المخالفة</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">تاريخ المخالفة</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">الإجراء المتخذ</th>
+          <th style="padding: 7px 4px; border: 1px solid #145236; text-align: center; font-weight: 700;">تاريخ الإجراء</th>
         </tr>
       </thead>
       <tbody>
@@ -73,7 +85,7 @@ export function generateStudentPDF(reportData) {
       </tbody>
     </table>
 
-    <div style="margin-top: 16px; text-align: center; font-size: 10px; color: #999;">
+    <div style="margin-top: 12px; text-align: center; font-size: 9px; color: #999;">
       الماهر بالقرآن — الموجه التربوي — ${escapeHtml(dateStr)}
     </div>
   </div>`
@@ -89,11 +101,11 @@ export function generateStudentPDF(reportData) {
   const element = container.querySelector('#pdf-report')
 
   const opts = {
-    margin: [10, 10, 10, 10],
+    margin: [8, 8, 8, 8],
     filename: fileName,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 1080 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   }
 
@@ -110,13 +122,13 @@ function rowHtml(student, circle, teacher, violation, vDate, action, aDate) {
     : '#E8F5E9'
   return `
     <tr style="background: white;">
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center; font-weight: 600;">${escapeHtml(student)}</td>
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center;">${escapeHtml(circle || '-')}</td>
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center;">${escapeHtml(teacher || '-')}</td>
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center;">${violation}</td>
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center; white-space: nowrap;">${escapeHtml(vDate || '-')}</td>
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center; background: ${actionBg};">${action}</td>
-      <td style="padding: 6px 8px; border: 1px solid #D4D4D4; text-align: center; white-space: nowrap;">${escapeHtml(aDate || '-')}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; font-weight: 600; word-wrap: break-word;">${escapeHtml(student)}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; word-wrap: break-word;">${escapeHtml(circle || '-')}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; word-wrap: break-word;">${escapeHtml(teacher || '-')}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; word-wrap: break-word;">${violation}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; white-space: nowrap;">${escapeHtml(vDate || '-')}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; background: ${actionBg}; word-wrap: break-word;">${action}</td>
+      <td style="padding: 6px 4px; border: 1px solid #D4D4D4; text-align: center; white-space: nowrap;">${escapeHtml(aDate || '-')}</td>
     </tr>
   `
 }
