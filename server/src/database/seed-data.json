@@ -111,15 +111,6 @@
     { "name": "محمود احمد عبدالوهاب", "circle": "خالد بن الوليد", "student_phone": "", "parent_phone_1": "1223522804", "parent_phone_2": "" }
   ],
   "behaviorTypes": [
-    { "name": "حفظ ممتاز", "type": "positive", "category": "academic", "severity": "low" },
-    { "name": "تلاوة متقنة", "type": "positive", "category": "academic", "severity": "low" },
-    { "name": "سلوك حسن", "type": "positive", "category": "conduct", "severity": "low" },
-    { "name": "مساعدة الزملاء", "type": "positive", "category": "conduct", "severity": "low" },
-    { "name": "حضور منتظم", "type": "positive", "category": "attendance", "severity": "low" },
-    { "name": "تفوق في المراجعة", "type": "positive", "category": "academic", "severity": "low" },
-    { "name": "أدب واحترام", "type": "positive", "category": "conduct", "severity": "low" },
-    { "name": "مشاركة فعالة", "type": "positive", "category": "academic", "severity": "low" },
-
     { "name": "غياب بدون عذر", "type": "negative", "category": "attendance", "severity": "high",
       "escalation_rule": "{\"alert_at\":1,\"warning_at\":2,\"decision_at\":3}" },
     { "name": "غياب بعذر", "type": "negative", "category": "attendance", "severity": "medium",

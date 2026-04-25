@@ -459,9 +459,9 @@ export default function StudentDetailPage({ showToast }) {
 
       {/* Behaviors Header */}
       <div className="page-header">
-        <h2 style={{ fontSize: 18, fontWeight: 700 }}>سجل السلوكيات ({behaviors.length})</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>سجل المخالفات ({behaviors.length})</h2>
         <button className="btn btn-primary" onClick={() => navigate(`/behaviors/new?student=${id}`)}>
-          <FiPlus size={16} /> تسجيل سلوك
+          <FiPlus size={16} /> تسجيل مخالفة
         </button>
       </div>
 
@@ -473,7 +473,7 @@ export default function StudentDetailPage({ showToast }) {
               <div className="card" style={{ marginBottom: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
-                    <span className={`badge badge-${b.type}`}>{b.type === 'positive' ? 'إيجابي' : 'سلبي'}</span>
+                    <span className="badge badge-negative">مخالفة</span>
                     <span className="timeline-date" style={{ marginRight: 12 }}><FiCalendar size={12} style={{ marginLeft: 4 }} />{formatArabicDate(b.date)}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -541,8 +541,8 @@ export default function StudentDetailPage({ showToast }) {
         </div>
       ) : (
         <div className="card empty-state">
-          <h3>لا توجد سلوكيات مسجلة</h3>
-          <p>اضغط على "تسجيل سلوك" لإضافة ملاحظة جديدة</p>
+          <h3>لا توجد مخالفات مسجلة</h3>
+          <p>اضغط على "تسجيل مخالفة" لإضافة ملاحظة جديدة</p>
         </div>
       )}
 
@@ -595,41 +595,24 @@ export default function StudentDetailPage({ showToast }) {
             </div>
 
             <div className="form-group">
-              <label>نوع السلوك</label>
-              <div className="type-selector">
-                <button
-                  type="button"
-                  className={`type-btn positive ${editForm.type === 'positive' ? 'active' : ''}`}
-                  onClick={() => setEditForm(f => ({ ...f, type: 'positive', behavior_type_id: '' }))}
-                >سلوك إيجابي</button>
-                <button
-                  type="button"
-                  className={`type-btn negative ${editForm.type === 'negative' ? 'active' : ''}`}
-                  onClick={() => setEditForm(f => ({ ...f, type: 'negative', behavior_type_id: '' }))}
-                >سلوك سلبي / مخالفة</button>
-              </div>
+              <label>تصنيف المخالفة (حسب الميثاق)</label>
+              <select className="form-control" value={editForm.behavior_type_id}
+                onChange={e => {
+                  const btId = e.target.value
+                  const bt = behaviorTypes.find(t => String(t.id) === String(btId))
+                  setEditForm(f => ({
+                    ...f,
+                    behavior_type_id: btId,
+                    type: 'negative',
+                    description: bt ? bt.name : f.description
+                  }))
+                }}>
+                <option value="">— بدون تصنيف —</option>
+                {behaviorTypes.map(bt => (
+                  <option key={bt.id} value={bt.id}>{bt.name}</option>
+                ))}
+              </select>
             </div>
-
-            {editForm.type && (
-              <div className="form-group">
-                <label>التصنيف (حسب الميثاق)</label>
-                <select className="form-control" value={editForm.behavior_type_id}
-                  onChange={e => {
-                    const btId = e.target.value
-                    const bt = behaviorTypes.find(t => String(t.id) === String(btId))
-                    setEditForm(f => ({
-                      ...f,
-                      behavior_type_id: btId,
-                      description: bt ? bt.name : f.description
-                    }))
-                  }}>
-                  <option value="">— بدون تصنيف —</option>
-                  {behaviorTypes.filter(bt => bt.type === editForm.type).map(bt => (
-                    <option key={bt.id} value={bt.id}>{bt.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             <div className="form-group">
               <label>وصف السلوك</label>

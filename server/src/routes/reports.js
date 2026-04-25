@@ -31,7 +31,7 @@ module.exports = function(sql) {
   });
 
   async function getBehaviors(sql, studentId) {
-    const rows = await sql`SELECT b.id, b.type, b.description, b.date, bt.name as behavior_type_name FROM behaviors b LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${studentId} ORDER BY b.date DESC`;
+    const rows = await sql`SELECT b.id, b.type, b.description, b.date, bt.name as behavior_type_name FROM behaviors b LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${studentId} AND b.type = 'negative' ORDER BY b.date DESC`;
     for (const b of rows) {
       b.actions = await sql`SELECT description, action_date FROM actions WHERE behavior_id = ${b.id} ORDER BY action_date`;
       b.action_count = b.actions.length;
@@ -49,9 +49,7 @@ module.exports = function(sql) {
       if (!s.length) return res.status(404).json({ error: 'الطالب غير موجود' });
       const behaviors = await getBehaviors(sql, req.params.studentId);
       const alerts = await getAlerts(sql, req.params.studentId);
-      const pos = behaviors.filter(b => b.type === 'positive');
-      const neg = behaviors.filter(b => b.type === 'negative');
-      res.json({ student_name: s[0].name, circle_name: s[0].circle_name, total_behaviors: behaviors.length, positive_count: pos.length, negative_count: neg.length, alerts_summary: { total: alerts.length, pending: alerts.filter(a => a.status === 'pending').length, alerts_list: alerts }, behaviors });
+      res.json({ student_name: s[0].name, circle_name: s[0].circle_name, total_behaviors: behaviors.length, negative_count: behaviors.length, alerts_summary: { total: alerts.length, pending: alerts.filter(a => a.status === 'pending').length, alerts_list: alerts }, behaviors });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 

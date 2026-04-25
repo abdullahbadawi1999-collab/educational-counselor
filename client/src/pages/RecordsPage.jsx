@@ -315,21 +315,18 @@ export default function RecordsPage({ showToast }) {
                 </div>
               )
             } else {
-              // Behavior item
-              const isNeg = item.type === 'negative'
+              // Behavior item (negative only)
               return (
                 <div key={item.id} style={{
                   background: 'white', borderRadius: 12, overflow: 'hidden',
-                  border: `1px solid ${isNeg ? '#FFCDD2' : '#C8E6C9'}`,
+                  border: '1px solid #FFCDD2',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                  borderRight: `5px solid ${isNeg ? '#D32F2F' : '#2E7D32'}`
+                  borderRight: '5px solid #D32F2F'
                 }}>
                   <div style={{ padding: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span className={`badge badge-${item.type}`}>
-                          {isNeg ? '❌ مخالفة' : '✅ إيجابي'}
-                        </span>
+                        <span className="badge badge-negative">❌ مخالفة</span>
                         {item.category && (
                           <span style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'var(--bg)', padding: '3px 8px', borderRadius: 10 }}>
                             {item.category}

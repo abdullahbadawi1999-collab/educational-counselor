@@ -5,7 +5,7 @@ const navItems = [
   { path: '/', label: 'لوحة التحكم', icon: FiHome },
   { path: '/circles', label: 'الحلقات', icon: FiBookOpen },
   { path: '/students', label: 'الطلاب', icon: FiUsers },
-  { path: '/behaviors/new', label: 'تسجيل سلوك', icon: FiPlusCircle },
+  { path: '/behaviors/new', label: 'تسجيل مخالفة', icon: FiPlusCircle },
   { path: '/records', label: 'سجل المخالفات', icon: FiAlertTriangle },
 ]
 

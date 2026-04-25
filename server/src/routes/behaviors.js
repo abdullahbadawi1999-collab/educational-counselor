@@ -4,7 +4,7 @@ const router = express.Router();
 module.exports = function(sql) {
   router.get('/types', async (req, res) => {
     try {
-      const types = await sql`SELECT id, name, type, category, severity, escalation_rule, is_active FROM behavior_types WHERE is_active = 1 ORDER BY type, category, name`;
+      const types = await sql`SELECT id, name, type, category, severity, escalation_rule, is_active FROM behavior_types WHERE is_active = 1 AND type = 'negative' ORDER BY category, name`;
       res.json(types.map(t => ({ ...t, escalation_rule: t.escalation_rule ? JSON.parse(t.escalation_rule) : null })));
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
@@ -24,11 +24,11 @@ module.exports = function(sql) {
       // Build query based on filters
       let behaviors;
       if (student_id) {
-        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${student_id} ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
+        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${student_id} AND b.type = 'negative' ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
       } else if (circle_id) {
-        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE s.circle_id = ${circle_id} ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
+        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE s.circle_id = ${circle_id} AND b.type = 'negative' ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
       } else {
-        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
+        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.type = 'negative' ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
       }
       res.json(behaviors);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -45,14 +45,16 @@ module.exports = function(sql) {
   });
 
   router.post('/', async (req, res) => {
-    const { student_id, behavior_type_id, type, description, date } = req.body;
-    if (!student_id || !type || !description || !date) return res.status(400).json({ error: 'الطالب والنوع والوصف والتاريخ مطلوبين' });
+    const { student_id, behavior_type_id, description, date } = req.body;
+    // Platform now records only violations (negative behaviors)
+    const type = 'negative';
+    if (!student_id || !description || !date) return res.status(400).json({ error: 'الطالب والوصف والتاريخ مطلوبين' });
     try {
       const result = await sql`INSERT INTO behaviors (student_id, behavior_type_id, type, description, date) VALUES (${student_id}, ${behavior_type_id || null}, ${type}, ${description}, ${date}) RETURNING id`;
       const id = result[0].id;
 
       let generatedAlert = null;
-      if (type === 'negative' && behavior_type_id) {
+      if (behavior_type_id) {
         try { generatedAlert = await checkCumulativeEscalation(sql, student_id, behavior_type_id, id); }
         catch (err) { console.error('Escalation error:', err.message); }
       }

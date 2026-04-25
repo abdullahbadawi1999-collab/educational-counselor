@@ -16,13 +16,10 @@ module.exports = function(sql) {
   async function getStudentContext(sql, studentId) {
     const s = await sql`SELECT s.name, c.name as circle_name, c.teacher_name FROM students s JOIN circles c ON s.circle_id = c.id WHERE s.id = ${studentId}`;
     if (!s.length) return null;
-    const behaviors = await sql`SELECT b.type, b.description, b.date, bt.name as bt_name FROM behaviors b LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${studentId} ORDER BY b.date DESC`;
+    const behaviors = await sql`SELECT b.type, b.description, b.date, bt.name as bt_name FROM behaviors b LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${studentId} AND b.type = 'negative' ORDER BY b.date DESC`;
     const alerts = await sql`SELECT level_name, reason, status, action_taken FROM alerts WHERE student_id = ${studentId} ORDER BY created_at DESC`;
-    const pos = behaviors.filter(b => b.type === 'positive');
-    const neg = behaviors.filter(b => b.type === 'negative');
-    const negByType = {}; neg.forEach(b => { const k = b.bt_name || b.description; negByType[k] = (negByType[k] || 0) + 1; });
-    const posByType = {}; pos.forEach(b => { const k = b.bt_name || b.description; posByType[k] = (posByType[k] || 0) + 1; });
-    return { name: s[0].name, circle: s[0].circle_name, teacher: s[0].teacher_name, totalBehaviors: behaviors.length, positiveCount: pos.length, negativeCount: neg.length, positiveByType: posByType, negativeByType: negByType, alerts, pendingAlerts: alerts.filter(a => a.status === 'pending').length };
+    const negByType = {}; behaviors.forEach(b => { const k = b.bt_name || b.description; negByType[k] = (negByType[k] || 0) + 1; });
+    return { name: s[0].name, circle: s[0].circle_name, teacher: s[0].teacher_name, totalBehaviors: behaviors.length, negativeCount: behaviors.length, negativeByType: negByType, alerts, pendingAlerts: alerts.filter(a => a.status === 'pending').length };
   }
 
   function generateResponse(ctx, message) {
@@ -43,10 +40,15 @@ module.exports = function(sql) {
   }
 
   function overviewAdvice(ctx) {
-    const ratio = ctx.totalBehaviors > 0 ? ((ctx.positiveCount / ctx.totalBehaviors) * 100).toFixed(0) : 0;
-    let r = `📊 ملخص عن ${ctx.name}:\n📍 ${ctx.circle} — ${ctx.teacher}\n📈 السلوكيات: ${ctx.totalBehaviors}\n   ✅ إيجابي: ${ctx.positiveCount} (${ratio}%)\n   ❌ سلبي: ${ctx.negativeCount}\n   🔔 تنبيهات: ${ctx.alerts.length} (${ctx.pendingAlerts} معلق)\n\n`;
-    r += ratio >= 70 ? '🌟 ممتاز! حافظ على هذا المستوى.' : ratio >= 40 ? '⚡ متوسط. يحتاج مزيداً من التحفيز.' : '⚠️ يحتاج اهتماماً خاصاً. اكتب "خطة" لخطة تحسين.';
-    if (Object.keys(ctx.negativeByType).length > 0) { r += '\n\n📌 الأكثر تكراراً:\n'; Object.entries(ctx.negativeByType).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => { r += `   • ${k}: ${v} مرة\n`; }); }
+    let r = `📊 ملخص عن ${ctx.name}:\n📍 ${ctx.circle} — ${ctx.teacher}\n📈 إجمالي المخالفات: ${ctx.negativeCount}\n   🔔 تنبيهات: ${ctx.alerts.length} (${ctx.pendingAlerts} معلق)\n\n`;
+    if (ctx.negativeCount === 0) {
+      r += '🌟 ممتاز! لا توجد مخالفات مسجلة. حافظ على متابعة الطالب.';
+    } else if (ctx.negativeCount <= 2) {
+      r += '⚡ مخالفات قليلة. تابع باستمرار وحاول تجنب التصاعد.';
+    } else {
+      r += '⚠️ يحتاج اهتماماً خاصاً. اكتب "خطة" لخطة تحسين مفصلة.';
+    }
+    if (Object.keys(ctx.negativeByType).length > 0) { r += '\n\n📌 المخالفات الأكثر تكراراً:\n'; Object.entries(ctx.negativeByType).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => { r += `   • ${k}: ${v} مرة\n`; }); }
     return r;
   }
 
@@ -70,11 +72,11 @@ module.exports = function(sql) {
   }
 
   function academicAdvice(ctx) {
-    const n = ctx.negativeByType['الإهمال المتكرر في الحفظ والمراجعة'] || 0, g = ctx.positiveByType['حفظ ممتاز'] || 0;
-    let r = `📊 مستوى ${ctx.name} الأكاديمي:\n• حفظ ممتاز: ${g}\n• إهمال: ${n}\n\n`;
+    const n = ctx.negativeByType['الإهمال المتكرر في الحفظ والمراجعة'] || 0;
+    let r = `📊 مستوى ${ctx.name} الأكاديمي:\n• إهمال في الحفظ: ${n}\n\n`;
     if (n >= 3) r += '⚠️ يحتاج تدخل:\n1. تقليل كمية الحفظ مؤقتاً\n2. التركيز على المراجعة\n3. مكافأة كل إنجاز\n4. تنسيق مع الأسرة لـ 15 دقيقة مراجعة يومية';
-    else if (g > 0) r += '✅ مستوى جيد! شجّعه على مسابقات القرآن';
-    else r += '📋 ابدأ بكميات صغيرة وزِدها تدريجياً مع التحفيز';
+    else if (n > 0) r += '⚡ يحتاج متابعة لتجنب تكرار الإهمال';
+    else r += '✅ لا توجد ملاحظات على الجانب الأكاديمي';
     return r;
   }
 
@@ -85,8 +87,7 @@ module.exports = function(sql) {
   }
 
   function motivationAdvice(ctx) {
-    let r = `⭐ تحفيز ${ctx.name}:\n\n1. 🏆 تكريم أسبوعي\n2. ⭐ نظام نجوم (10 = هدية)\n3. 📜 شهادات شهرية\n4. 🎯 أهداف شخصية\n5. 👥 مسؤوليات داخل الحلقة\n6. 📞 اتصال إيجابي بولي الأمر\n7. 🤲 الدعاء أمام الجميع\n8. 📖 قصص حفاظ القرآن`;
-    if (ctx.positiveCount > 0) r += `\n\n✅ لديه ${ctx.positiveCount} إيجابية — ابنِ عليها!`;
+    let r = `⭐ تحفيز ${ctx.name}:\n\n1. 🏆 تكريم الملتزمين أسبوعياً\n2. ⭐ نظام نقاط/نجوم للسلوك المنضبط\n3. 📜 شهادات شهرية\n4. 🎯 أهداف شخصية بسيطة\n5. 👥 مسؤوليات داخل الحلقة\n6. 📞 اتصال إيجابي بولي الأمر عند التحسن\n7. 🤲 الدعاء أمام الجميع\n8. 📖 قصص حفاظ القرآن`;
     return r;
   }
 

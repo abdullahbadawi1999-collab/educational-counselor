@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js'
-import { Bar, Doughnut, Line, Pie } from 'react-chartjs-2'
-import { FiUsers, FiBookOpen, FiThumbsUp, FiThumbsDown, FiAlertTriangle } from 'react-icons/fi'
+import { Bar, Line, Pie } from 'react-chartjs-2'
+import { FiUsers, FiBookOpen, FiThumbsDown, FiAlertTriangle } from 'react-icons/fi'
 import api from '../services/api'
 import { formatArabicDate } from '../utils/dateFormat'
 
@@ -12,7 +12,6 @@ ChartJS.defaults.font.family = 'Tajawal'
 export default function DashboardPage() {
   const [overview, setOverview] = useState(null)
   const [byCircle, setByCircle] = useState([])
-  const [byType, setByType] = useState([])
   const [byMonth, setByMonth] = useState([])
   const [completion, setCompletion] = useState(null)
   const [recentBehaviors, setRecentBehaviors] = useState([])
@@ -28,7 +27,6 @@ export default function DashboardPage() {
   useEffect(() => {
     api.get('/stats/overview').then(r => setOverview(r.data))
     api.get('/stats/behaviors-by-circle').then(r => setByCircle(r.data))
-    api.get('/stats/behaviors-by-type').then(r => setByType(r.data))
     api.get('/stats/behaviors-by-month').then(r => setByMonth(r.data))
     api.get('/stats/action-completion').then(r => setCompletion(r.data))
     api.get('/behaviors?limit=10').then(r => setRecentBehaviors(r.data))
@@ -38,22 +36,15 @@ export default function DashboardPage() {
   const circleChartData = {
     labels: circleNames,
     datasets: [
-      { label: 'إيجابي', data: circleNames.map(n => byCircle.find(d => d.circle_name === n && d.type === 'positive')?.count || 0), backgroundColor: '#4CAF50', borderRadius: 6 },
-      { label: 'سلبي', data: circleNames.map(n => byCircle.find(d => d.circle_name === n && d.type === 'negative')?.count || 0), backgroundColor: '#EF5350', borderRadius: 6 }
+      { label: 'المخالفات', data: circleNames.map(n => byCircle.find(d => d.circle_name === n)?.count || 0), backgroundColor: '#EF5350', borderRadius: 6 }
     ]
-  }
-
-  const typeChartData = {
-    labels: ['إيجابي', 'سلبي'],
-    datasets: [{ data: [byType.find(d => d.type === 'positive')?.count || 0, byType.find(d => d.type === 'negative')?.count || 0], backgroundColor: ['#4CAF50', '#EF5350'], borderWidth: 0 }]
   }
 
   const months = [...new Set(byMonth.map(d => d.month))].sort()
   const monthChartData = {
     labels: months,
     datasets: [
-      { label: 'إيجابي', data: months.map(m => byMonth.find(d => d.month === m && d.type === 'positive')?.count || 0), borderColor: '#4CAF50', backgroundColor: 'rgba(76, 175, 80, 0.1)', fill: true, tension: 0.4 },
-      { label: 'سلبي', data: months.map(m => byMonth.find(d => d.month === m && d.type === 'negative')?.count || 0), borderColor: '#EF5350', backgroundColor: 'rgba(239, 83, 80, 0.1)', fill: true, tension: 0.4 }
+      { label: 'المخالفات', data: months.map(m => byMonth.find(d => d.month === m)?.count || 0), borderColor: '#EF5350', backgroundColor: 'rgba(239, 83, 80, 0.1)', fill: true, tension: 0.4 }
     ]
   }
 
@@ -85,12 +76,10 @@ export default function DashboardPage() {
   const stats = [
     { value: overview?.total_students || 0, label: 'الطلاب', color: '#1565C0', bg: '#E3F2FD', icon: FiUsers },
     { value: overview?.total_circles || 0, label: 'الحلقات', color: '#7B1FA2', bg: '#F3E5F5', icon: FiBookOpen },
-    { value: overview?.positive_behaviors || 0, label: 'إيجابي', color: '#2E7D32', bg: '#E8F5E9', icon: FiThumbsUp },
-    { value: overview?.negative_behaviors || 0, label: 'سلبي', color: '#D32F2F', bg: '#FFEBEE', icon: FiThumbsDown },
+    { value: overview?.negative_behaviors || 0, label: 'مخالفات', color: '#D32F2F', bg: '#FFEBEE', icon: FiThumbsDown },
     { value: overview?.pending_alerts || 0, label: 'معلقة', color: '#F57C00', bg: '#FFF3E0', icon: FiAlertTriangle, onClick: () => navigate('/records') },
   ]
 
-  // Chart heights — smaller on mobile
   const barHeight = isMobile ? Math.max(220, circleNames.length * 28) : Math.max(250, circleNames.length * 35)
   const chartHeight = isMobile ? 220 : 250
 
@@ -98,7 +87,6 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       <h1 className="page-title" style={{ marginBottom: 16 }}>لوحة التحكم</h1>
 
-      {/* Pending Alerts Banner */}
       {overview?.pending_alerts > 0 && (
         <div onClick={() => navigate('/records')} className="alerts-banner">
           <div className="alerts-banner-content">
@@ -114,7 +102,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stat Cards */}
-      <div className="dashboard-stats">
+      <div className="dashboard-stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {stats.map((s, i) => (
           <div key={i} className="stat-card dash-stat" onClick={s.onClick} style={s.onClick ? { cursor: 'pointer' } : {}}>
             <div className="dash-stat-icon" style={{ background: s.bg }}>
@@ -131,25 +119,9 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="grid-2" style={{ marginBottom: 16 }}>
         <div className="card">
-          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>السلوكيات حسب الحلقة</h3>
+          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>المخالفات حسب الحلقة</h3>
           <div style={{ height: barHeight, width: '100%' }}>
             {circleNames.length > 0 ? <Bar data={circleChartData} options={barOptions} /> :
-              <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 40 }}>لا توجد بيانات بعد</p>}
-          </div>
-        </div>
-        <div className="card">
-          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>توزيع السلوكيات</h3>
-          <div style={{ height: chartHeight, display: 'flex', justifyContent: 'center' }}>
-            <Doughnut data={typeChartData} options={{ ...chartOptions, cutout: '60%' }} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid-2" style={{ marginBottom: 16 }}>
-        <div className="card">
-          <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>السلوكيات حسب الشهر</h3>
-          <div style={{ height: chartHeight, width: '100%' }}>
-            {months.length > 0 ? <Line data={monthChartData} options={chartOptions} /> :
               <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 40 }}>لا توجد بيانات بعد</p>}
           </div>
         </div>
@@ -161,23 +133,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>المخالفات حسب الشهر</h3>
+        <div style={{ height: chartHeight, width: '100%' }}>
+          {months.length > 0 ? <Line data={monthChartData} options={chartOptions} /> :
+            <p style={{ textAlign: 'center', color: 'var(--text-light)', paddingTop: 40 }}>لا توجد بيانات بعد</p>}
+        </div>
+      </div>
+
       {/* Recent Behaviors */}
       <div className="card">
-        <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>آخر السلوكيات المسجلة</h3>
+        <h3 style={{ marginBottom: 10, fontSize: isMobile ? 14 : 15 }}>آخر المخالفات المسجلة</h3>
         {recentBehaviors.length > 0 ? (
           isMobile ? (
-            // Mobile: card list instead of table
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {recentBehaviors.map(b => (
                 <div key={b.id} onClick={() => navigate(`/students/${b.student_id}`)} style={{
                   padding: 10, borderRadius: 8, background: 'var(--bg)', cursor: 'pointer',
-                  borderRight: `3px solid ${b.type === 'positive' ? '#2E7D32' : '#D32F2F'}`
+                  borderRight: '3px solid #D32F2F'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, gap: 6 }}>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{b.student_name}</span>
-                    <span className={`badge badge-${b.type}`} style={{ fontSize: 10 }}>
-                      {b.type === 'positive' ? 'إيجابي' : 'سلبي'}
-                    </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
                     {b.circle_name}
@@ -194,15 +170,13 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            // Desktop: table
             <div className="table-container">
               <table>
                 <thead>
                   <tr>
                     <th>الطالب</th>
                     <th>الحلقة</th>
-                    <th>النوع</th>
-                    <th>الوصف</th>
+                    <th>المخالفة</th>
                     <th>التاريخ</th>
                     <th>الإجراء</th>
                   </tr>
@@ -212,7 +186,6 @@ export default function DashboardPage() {
                     <tr key={b.id} onClick={() => navigate(`/students/${b.student_id}`)}>
                       <td style={{ fontWeight: 600 }}>{b.student_name}</td>
                       <td>{b.circle_name}</td>
-                      <td><span className={`badge badge-${b.type}`}>{b.type === 'positive' ? 'إيجابي' : 'سلبي'}</span></td>
                       <td>{b.description}</td>
                       <td>{formatArabicDate(b.date)}</td>
                       <td>
@@ -228,7 +201,7 @@ export default function DashboardPage() {
             </div>
           )
         ) : (
-          <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: 20 }}>لم يتم تسجيل أي سلوكيات بعد. ابدأ بتسجيل سلوك جديد.</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: 30 }}>لم يتم تسجيل أي مخالفات بعد. ابدأ بتسجيل مخالفة جديدة.</p>
         )}
       </div>
     </div>
