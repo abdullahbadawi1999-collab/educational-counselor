@@ -242,7 +242,10 @@ export default function StudentDetailPage({ showToast }) {
             <div style={{ fontSize: 12, color: 'var(--text-light)' }}>المعلم: {student.teacher_name}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn btn-outline btn-sm" onClick={handleRecalculate} title="إعادة حساب التنبيهات حسب قواعد الميثاق">
+            🔄 إعادة الحساب
+          </button>
           <button className="btn btn-outline btn-sm" onClick={handleExportExcel}>
             <FiDownload size={14} /> Excel
           </button>
