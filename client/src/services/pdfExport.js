@@ -17,7 +17,7 @@ import { formatArabicDate } from '../utils/dateFormat'
  * flow naturally across pages so the header is not stranded on page 1.
  */
 export function generateStudentPDF(reportData) {
-  const { students, scope, circle, generated_at } = reportData
+  const { students, scope, circle, semester, generated_at } = reportData
   const dateStr = formatArabicDate(generated_at)
 
   const fileName = scope === 'student' && students[0]
@@ -39,7 +39,7 @@ export function generateStudentPDF(reportData) {
   }
 
   // Header content shown once at the very top
-  const headerHtml = renderTopHeader({ scope, circle, student: scope === 'student' ? students[0] : null, dateStr })
+  const headerHtml = renderTopHeader({ scope, circle, semester, student: scope === 'student' ? students[0] : null, dateStr })
 
   const html = `
   <div id="pdf-report" dir="rtl" lang="ar" style="
@@ -84,10 +84,12 @@ export function generateStudentPDF(reportData) {
 
 // ===== HEADERS =====
 
-function renderTopHeader({ scope, circle, student, dateStr }) {
+function renderTopHeader({ scope, circle, semester, student, dateStr }) {
   let lines = []
   lines.push(`<div style="font-size: 20px; font-weight: 800; color: #1B6B4A; margin-bottom: 2px;">تقرير السجل السلوكي</div>`)
   lines.push(`<div style="font-size: 12px; color: #555;">الماهر بالقرآن — الموجه التربوي</div>`)
+  const semLabel = semester ? `${semester.name} ${semester.hijri || ''} — ${semester.gregorian || ''}` : 'كل الفصول الدراسية'
+  lines.push(`<div style="font-size: 11px; color: #1B6B4A; margin-top: 3px; font-weight: 700;">الفصل الدراسي: ${escapeHtml(semLabel)}</div>`)
   lines.push(`<div style="font-size: 10px; color: #777; margin-top: 2px;">تاريخ التقرير: ${escapeHtml(dateStr)}</div>`)
 
   if (scope === 'student' && student) {

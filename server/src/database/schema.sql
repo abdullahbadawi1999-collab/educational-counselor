@@ -5,14 +5,31 @@ CREATE TABLE IF NOT EXISTS circles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Academic terms. New behaviors/alerts are stamped with the current semester
+-- (is_current = 1); reads can be scoped to a semester or span all of them.
+CREATE TABLE IF NOT EXISTS semesters (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  hijri TEXT,
+  gregorian TEXT,
+  start_date TEXT,
+  end_date TEXT,
+  is_current INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS students (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
-  circle_id INTEGER NOT NULL REFERENCES circles(id) ON DELETE CASCADE,
+  circle_id INTEGER REFERENCES circles(id) ON DELETE SET NULL,
   student_phone TEXT,
   parent_phone_1 TEXT,
   parent_phone_2 TEXT,
   notes TEXT,
+  code TEXT,
+  gender TEXT,
+  is_active INTEGER DEFAULT 1,          -- 0 = excluded (moved to the excluded list)
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -33,6 +50,7 @@ CREATE TABLE IF NOT EXISTS behaviors (
   type TEXT NOT NULL CHECK(type IN ('positive', 'negative')),
   description TEXT NOT NULL,
   date TEXT NOT NULL,
+  semester_id INTEGER REFERENCES semesters(id),
   action_taken INTEGER DEFAULT 0,
   action_description TEXT,
   action_date TEXT,
@@ -50,6 +68,7 @@ CREATE TABLE IF NOT EXISTS alerts (
   status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'done')),
   action_taken TEXT,
   action_date TEXT,
+  semester_id INTEGER REFERENCES semesters(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -70,3 +89,6 @@ CREATE INDEX IF NOT EXISTS idx_actions_behavior ON actions(behavior_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_student ON alerts(student_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status);
 CREATE INDEX IF NOT EXISTS idx_alerts_level ON alerts(level);
+CREATE INDEX IF NOT EXISTS idx_behaviors_semester ON behaviors(semester_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_semester ON alerts(semester_id);
+CREATE INDEX IF NOT EXISTS idx_students_active ON students(is_active);

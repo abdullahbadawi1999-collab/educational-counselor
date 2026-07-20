@@ -19,6 +19,7 @@ app.use('/api/reports', require('./routes/reports')(sql));
 app.use('/api/ai', require('./routes/ai')(sql));
 app.use('/api/stats', require('./routes/stats')(sql));
 app.use('/api/admin', require('./routes/admin')(sql));
+app.use('/api/semesters', require('./routes/semesters')(sql));
 
 // Error handler
 app.use((err, req, res, next) => {

@@ -2,14 +2,17 @@ import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { FiMenu } from 'react-icons/fi'
 import Sidebar from './components/layout/Sidebar'
+import TopBar from './components/layout/TopBar'
+import SemesterModal from './components/common/SemesterModal'
+import { useSemester } from './context/SemesterContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CirclesPage from './pages/CirclesPage'
 import StudentsPage from './pages/StudentsPage'
 import StudentDetailPage from './pages/StudentDetailPage'
 import BehaviorEntryPage from './pages/BehaviorEntryPage'
-import AlertsPage from './pages/AlertsPage'
 import RecordsPage from './pages/RecordsPage'
+import ExcludedStudentsPage from './pages/ExcludedStudentsPage'
 
 function App() {
   const [toast, setToast] = useState(null)
@@ -17,6 +20,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => localStorage.getItem('auth') === 'true'
   )
+  const { selected, mustChoose } = useSemester()
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -55,16 +59,26 @@ function App() {
         padding: '24px 32px',
         minHeight: '100vh'
       }}>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/circles" element={<CirclesPage showToast={showToast} />} />
-          <Route path="/students" element={<StudentsPage />} />
-          <Route path="/students/:id" element={<StudentDetailPage showToast={showToast} />} />
-          <Route path="/behaviors/new" element={<BehaviorEntryPage showToast={showToast} />} />
-          <Route path="/alerts" element={<RecordsPage showToast={showToast} />} />
-          <Route path="/records" element={<RecordsPage showToast={showToast} />} />
-        </Routes>
+        <TopBar />
+        {/* Remount routed content when the semester changes so pages refetch. */}
+        {!mustChoose && (
+          <div key={selected}>
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/circles" element={<CirclesPage showToast={showToast} />} />
+              <Route path="/students" element={<StudentsPage />} />
+              <Route path="/students/:id" element={<StudentDetailPage showToast={showToast} />} />
+              <Route path="/excluded" element={<ExcludedStudentsPage showToast={showToast} />} />
+              <Route path="/behaviors/new" element={<BehaviorEntryPage showToast={showToast} />} />
+              <Route path="/alerts" element={<RecordsPage showToast={showToast} />} />
+              <Route path="/records" element={<RecordsPage showToast={showToast} />} />
+            </Routes>
+          </div>
+        )}
       </main>
+
+      {mustChoose && <SemesterModal />}
+
       {toast && (
         <div className={`toast toast-${toast.type}`}>{toast.message}</div>
       )}

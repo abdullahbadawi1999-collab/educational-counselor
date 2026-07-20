@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { FiHome, FiUsers, FiBookOpen, FiPlusCircle, FiAlertTriangle, FiX, FiLogOut } from 'react-icons/fi'
+import { FiHome, FiUsers, FiBookOpen, FiPlusCircle, FiAlertTriangle, FiX, FiLogOut, FiUserX } from 'react-icons/fi'
+import api from '../../services/api'
 
 const navItems = [
   { path: '/', label: 'لوحة التحكم', icon: FiHome },
@@ -7,10 +9,18 @@ const navItems = [
   { path: '/students', label: 'الطلاب', icon: FiUsers },
   { path: '/behaviors/new', label: 'تسجيل مخالفة', icon: FiPlusCircle },
   { path: '/records', label: 'سجل المخالفات', icon: FiAlertTriangle },
+  { path: '/excluded', label: 'الطلاب المستبعدون', icon: FiUserX, showCount: true },
 ]
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
+  const [excludedCount, setExcludedCount] = useState(null)
+
+  useEffect(() => {
+    api.get('/students/excluded-count')
+      .then(res => setExcludedCount(res.data.count))
+      .catch(() => {})
+  }, [location.pathname])
 
   return (
     <>
@@ -70,7 +80,15 @@ export default function Sidebar({ isOpen, onClose }) {
               })}
             >
               <item.icon size={20} />
-              {item.label}
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.showCount && excludedCount > 0 && (
+                <span style={{
+                  background: 'rgba(255,255,255,0.25)', color: 'white',
+                  borderRadius: 999, fontSize: 12, fontWeight: 700,
+                  minWidth: 22, height: 22, display: 'inline-flex',
+                  alignItems: 'center', justifyContent: 'center', padding: '0 6px'
+                }}>{excludedCount}</span>
+              )}
             </NavLink>
           ))}
         </nav>

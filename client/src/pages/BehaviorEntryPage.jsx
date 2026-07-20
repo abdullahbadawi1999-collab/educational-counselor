@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { FiCheck, FiUser, FiAlertTriangle } from 'react-icons/fi'
+import { FiCheck, FiUser, FiAlertTriangle, FiCalendar } from 'react-icons/fi'
 import api from '../services/api'
 import { useDebounce } from '../hooks/useApi'
+import { useSemester } from '../context/SemesterContext'
 
 const categoryLabels = {
   attendance: '📅 الحضور والغياب',
@@ -20,6 +21,8 @@ const severityLabels = {
 export default function BehaviorEntryPage({ showToast }) {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { semesters } = useSemester()
+  const currentSemester = semesters.find(s => s.is_current)
   const [students, setStudents] = useState([])
   const [behaviorTypes, setBehaviorTypes] = useState([])
   const [search, setSearch] = useState('')
@@ -128,7 +131,18 @@ export default function BehaviorEntryPage({ showToast }) {
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <h1 className="page-title" style={{ marginBottom: 28 }}>تسجيل مخالفة جديدة</h1>
+      <h1 className="page-title" style={{ marginBottom: 12 }}>تسجيل مخالفة جديدة</h1>
+
+      {currentSemester && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24,
+          background: 'var(--primary-lighter)', border: '1px solid var(--primary-light)',
+          borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: 13, color: 'var(--primary-dark)'
+        }}>
+          <FiCalendar size={16} />
+          <span>سيتم تسجيل المخالفة في: <b>{currentSemester.name} {currentSemester.hijri}</b> (الفصل الحالي)</span>
+        </div>
+      )}
 
       {lastAlert && (
         <div style={{
@@ -242,7 +256,7 @@ export default function BehaviorEntryPage({ showToast }) {
                       bt.escalation_rule.converts_to_absence_at ?
                         <span>كل {bt.escalation_rule.converts_to_absence_at} = غياب</span> :
                         bt.escalation_rule.alert_at ?
-                          <span>تنبيه عند {bt.escalation_rule.alert_at} | إنذار عند {bt.escalation_rule.warning_at || '-'}</span> :
+                          <span>تنبيه عند {bt.escalation_rule.alert_at} | إنذار عند {bt.escalation_rule.warning_at || '-'}{bt.escalation_rule.decision_at ? ` | قرار عند ${bt.escalation_rule.decision_at}` : ''}</span> :
                           null
                     }
                   </div>

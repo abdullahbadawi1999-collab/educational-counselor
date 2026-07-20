@@ -33,15 +33,17 @@ function buildFlatRows(students) {
 }
 
 export function generateStudentExcel(reportData) {
-  const { students, scope, circle, generated_at } = reportData
+  const { students, scope, circle, semester, generated_at } = reportData
   const wb = XLSX.utils.book_new()
   const dateStr = formatArabicDate(generated_at)
+  const semLabel = semester ? `${semester.name} ${semester.hijri || ''} — ${semester.gregorian || ''}` : 'كل الفصول الدراسية'
 
   const headers = ['الطالب', 'الحلقة', 'المعلم', 'المخالفة', 'تاريخ المخالفة', 'الإجراء المتخذ', 'تاريخ الإجراء']
 
   const topRows = [
     ['تقرير السجل السلوكي — الماهر بالقرآن'],
     ['الموجه التربوي'],
+    ['الفصل الدراسي:', semLabel],
     ['تاريخ التقرير:', dateStr],
     circle ? ['الحلقة:', circle.name, 'المعلم:', circle.teacher_name] : [],
     [],

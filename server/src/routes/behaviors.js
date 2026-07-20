@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { parseSemester, getCurrentSemesterId } = require('../utils/semester');
+const { recalcStudentSemester, alertForBehavior } = require('../utils/escalation');
 
 module.exports = function(sql) {
   router.get('/types', async (req, res) => {
@@ -19,16 +21,16 @@ module.exports = function(sql) {
   });
 
   router.get('/', async (req, res) => {
-    const { student_id, circle_id, type, from, to, page = 1, limit = 50 } = req.query;
+    const { student_id, circle_id, limit = 50 } = req.query;
+    const semId = parseSemester(req.query);
     try {
-      // Build query based on filters
       let behaviors;
       if (student_id) {
-        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${student_id} AND b.type = 'negative' ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
+        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, b.semester_id, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.student_id = ${student_id} AND b.type = 'negative' AND (${semId}::int IS NULL OR b.semester_id = ${semId}) ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
       } else if (circle_id) {
-        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE s.circle_id = ${circle_id} AND b.type = 'negative' ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
+        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, b.semester_id, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE s.circle_id = ${circle_id} AND b.type = 'negative' AND (${semId}::int IS NULL OR b.semester_id = ${semId}) ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
       } else {
-        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.type = 'negative' ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
+        behaviors = await sql`SELECT b.id, b.student_id, b.type, b.description, b.date, b.created_at, b.semester_id, s.name as student_name, c.name as circle_name, c.id as circle_id, c.teacher_name, bt.name as behavior_type_name, (SELECT COUNT(*)::int FROM actions a WHERE a.behavior_id = b.id) as action_count FROM behaviors b JOIN students s ON b.student_id = s.id JOIN circles c ON s.circle_id = c.id LEFT JOIN behavior_types bt ON b.behavior_type_id = bt.id WHERE b.type = 'negative' AND (${semId}::int IS NULL OR b.semester_id = ${semId}) ORDER BY b.date DESC, b.created_at DESC LIMIT ${parseInt(limit)}`;
       }
       res.json(behaviors);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -46,72 +48,38 @@ module.exports = function(sql) {
 
   router.post('/', async (req, res) => {
     const { student_id, behavior_type_id, description, date } = req.body;
-    // Platform now records only violations (negative behaviors)
+    // Platform records only violations (negative behaviors).
     const type = 'negative';
     if (!student_id || !description || !date) return res.status(400).json({ error: 'الطالب والوصف والتاريخ مطلوبين' });
     try {
-      const result = await sql`INSERT INTO behaviors (student_id, behavior_type_id, type, description, date) VALUES (${student_id}, ${behavior_type_id || null}, ${type}, ${description}, ${date}) RETURNING id`;
+      // Writes always land in the current semester, regardless of the view.
+      const semesterId = await getCurrentSemesterId(sql);
+      const result = await sql`INSERT INTO behaviors (student_id, behavior_type_id, type, description, date, semester_id) VALUES (${student_id}, ${behavior_type_id || null}, ${type}, ${description}, ${date}, ${semesterId}) RETURNING id`;
       const id = result[0].id;
 
       let generatedAlert = null;
       if (behavior_type_id) {
-        try { generatedAlert = await checkCumulativeEscalation(sql, student_id, behavior_type_id, id); }
-        catch (err) { console.error('Escalation error:', err.message); }
+        try {
+          await recalcStudentSemester(sql, student_id, semesterId);
+          generatedAlert = await alertForBehavior(sql, id, semesterId);
+        } catch (err) { console.error('Escalation error:', err.message); }
       }
-      res.status(201).json({ id, student_id, type, description, date, generated_alert: generatedAlert });
+      res.status(201).json({ id, student_id, type, description, date, semester_id: semesterId, generated_alert: generatedAlert });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
-
-  async function checkCumulativeEscalation(sql, studentId, behaviorTypeId, behaviorId) {
-    const btRows = await sql`SELECT name, escalation_rule FROM behavior_types WHERE id = ${behaviorTypeId}`;
-    if (!btRows.length || !btRows[0].escalation_rule) return null;
-    const btName = btRows[0].name;
-    const rule = JSON.parse(btRows[0].escalation_rule);
-
-    const countRows = await sql`SELECT COUNT(*)::int as count FROM behaviors WHERE student_id = ${studentId} AND behavior_type_id = ${behaviorTypeId}`;
-    const count = countRows[0].count;
-
-    if (rule.immediate_warning) {
-      const level = rule.immediate_warning;
-      const names = { 1: 'تنبيه', 2: 'إنذار', 3: 'قرار' };
-      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, ${level}, ${names[level]}, ${btName + ' — إنذار فوري حسب الميثاق (المرة ' + count + ')'}, ${String(behaviorId)}, 'auto')`;
-      return { level, level_name: names[level], reason: btName + ' — إنذار فوري' };
-    }
-
-    // Non-cycling escalation: once decision threshold is reached, every
-    // additional violation stays at قرار. Warning and alert levels fire
-    // only exactly once at their thresholds before decision is reached.
-    if (rule.decision_at && count >= rule.decision_at) {
-      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 3, 'قرار', ${btName + ' — تكررت ' + count + ' مرات — يُحال للمشرفين لاتخاذ القرار'}, ${String(behaviorId)}, 'auto')`;
-      return { level: 3, level_name: 'قرار', reason: btName + ' تكررت ' + count + ' مرات' };
-    }
-    if (rule.warning_at && count === rule.warning_at) {
-      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 2, 'إنذار', ${btName + ' — تكررت ' + count + ' مرات — إنذار رسمي حسب الميثاق'}, ${String(behaviorId)}, 'auto')`;
-      return { level: 2, level_name: 'إنذار', reason: btName + ' تكررت ' + count + ' مرات' };
-    }
-    if (rule.alert_at && count === rule.alert_at) {
-      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type) VALUES (${studentId}, 1, 'تنبيه', ${btName + ' — تكررت ' + count + ' مرة — تواصل مع ولي الأمر'}, ${String(behaviorId)}, 'auto')`;
-      return { level: 1, level_name: 'تنبيه', reason: btName + ' تكررت ' + count + ' مرة' };
-    }
-    return null;
-  }
 
   router.put('/:id', async (req, res) => {
     const { type, description, date, behavior_type_id } = req.body;
     try {
-      // Fetch old state first
       const oldRows = await sql`SELECT * FROM behaviors WHERE id = ${req.params.id}`;
       if (!oldRows.length) return res.status(404).json({ error: 'السلوك غير موجود' });
       const oldBehavior = oldRows[0];
 
-      // Detect meaningful changes that require alert recalculation
-      const newType = type !== undefined ? type : oldBehavior.type;
       const newTypeId = behavior_type_id !== undefined ? (behavior_type_id || null) : oldBehavior.behavior_type_id;
-      const typeChanged = newType !== oldBehavior.type;
+      const typeChanged = (type !== undefined ? type : oldBehavior.type) !== oldBehavior.type;
       const btChanged = String(newTypeId || '') !== String(oldBehavior.behavior_type_id || '');
       const needsRecalc = typeChanged || btChanged;
 
-      // Update the behavior row
       await sql`UPDATE behaviors SET
         type = COALESCE(${type}, type),
         description = COALESCE(${description}, description),
@@ -119,44 +87,27 @@ module.exports = function(sql) {
         behavior_type_id = ${newTypeId}
         WHERE id = ${req.params.id}`;
 
-      let removedAlertsCount = 0;
       let generatedAlert = null;
-
       if (needsRecalc) {
-        // 1) Remove alerts that were triggered by THIS specific behavior
-        const bid = String(req.params.id);
-        const deleted = await sql`DELETE FROM alerts
-          WHERE trigger_behavior_ids = ${bid}
-            OR trigger_behavior_ids LIKE ${bid + ',%'}
-            OR trigger_behavior_ids LIKE ${'%,' + bid}
-            OR trigger_behavior_ids LIKE ${'%,' + bid + ',%'}
-          RETURNING id`;
-        removedAlertsCount = deleted.length || 0;
-
-        // 2) If new state is a tracked negative violation, re-run escalation
-        if (newType === 'negative' && newTypeId) {
-          try {
-            generatedAlert = await checkCumulativeEscalation(sql, oldBehavior.student_id, newTypeId, parseInt(req.params.id));
-          } catch (err) { console.error('Escalation recalc error:', err.message); }
-        }
+        try {
+          await recalcStudentSemester(sql, oldBehavior.student_id, oldBehavior.semester_id);
+          generatedAlert = await alertForBehavior(sql, req.params.id, oldBehavior.semester_id);
+        } catch (err) { console.error('Escalation recalc error:', err.message); }
       }
 
-      res.json({
-        message: 'تم التحديث',
-        recalculated: needsRecalc,
-        removed_alerts: removedAlertsCount,
-        generated_alert: generatedAlert
-      });
+      res.json({ message: 'تم التحديث', recalculated: needsRecalc, generated_alert: generatedAlert });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });
 
   router.delete('/:id', async (req, res) => {
     try {
-      const bid = String(req.params.id);
-      // Cascade delete: remove alerts that were triggered by this behavior
-      await sql`DELETE FROM alerts WHERE trigger_behavior_ids = ${bid} OR trigger_behavior_ids LIKE ${bid + ',%'} OR trigger_behavior_ids LIKE ${'%,' + bid} OR trigger_behavior_ids LIKE ${'%,' + bid + ',%'}`;
-      // Then delete the behavior (actions cascade by FK)
+      const rows = await sql`SELECT student_id, semester_id FROM behaviors WHERE id = ${req.params.id}`;
       await sql`DELETE FROM behaviors WHERE id = ${req.params.id}`;
+      // Recompute the student's alerts for that semester so counts stay correct.
+      if (rows.length) {
+        try { await recalcStudentSemester(sql, rows[0].student_id, rows[0].semester_id); }
+        catch (err) { console.error('Escalation recalc (delete) error:', err.message); }
+      }
       res.json({ message: 'تم الحذف' });
     } catch (err) { res.status(500).json({ error: err.message }); }
   });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX, FiEdit2, FiFileText } from 'react-icons/fi'
+import { FiPhone, FiArrowRight, FiPlus, FiCheck, FiCalendar, FiAlertTriangle, FiDownload, FiCpu, FiTrash2, FiSend, FiMessageCircle, FiX, FiEdit2, FiFileText, FiUserX } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import api from '../services/api'
 import { generateStudentExcel } from '../services/excelExport'
@@ -223,6 +223,15 @@ export default function StudentDetailPage({ showToast }) {
     )
   }
 
+  const handleExclude = async () => {
+    if (!confirm(`هل تريد استبعاد الطالب "${student.name}"؟\nسيتم نقله إلى قائمة الطلاب المستبعدين مع الاحتفاظ بكل سجلاته، ويمكنك إرجاعه لاحقاً.`)) return
+    try {
+      await api.post(`/students/${id}/exclude`)
+      showToast && showToast('تم استبعاد الطالب')
+      navigate('/excluded')
+    } catch { showToast && showToast('حدث خطأ', 'error') }
+  }
+
   if (loading) return <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>جاري التحميل...</div>
   if (!student) return <div style={{ textAlign: 'center', padding: 60 }}>الطالب غير موجود</div>
 
@@ -255,6 +264,11 @@ export default function StudentDetailPage({ showToast }) {
           <button className="btn btn-sm" onClick={openAiChat}
             style={{ background: '#7C3AED', color: 'white' }}>
             <FiMessageCircle size={14} /> استشارة ذكية
+          </button>
+          <button className="btn btn-sm" onClick={handleExclude}
+            style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}
+            title="نقل الطالب إلى قائمة المستبعدين">
+            <FiUserX size={14} /> استبعاد الطالب
           </button>
         </div>
       </div>
