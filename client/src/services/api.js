@@ -6,8 +6,8 @@ const api = axios.create({
 
 // The currently selected semester ('all' or a numeric id as string). Kept as a
 // module-level value so every request carries it without editing each call site.
-// Initialized synchronously from localStorage so the very first requests are scoped.
-let currentSemester = localStorage.getItem('selectedSemester') || 'all';
+// Resolved to the current semester by SemesterContext once /semesters loads.
+let currentSemester = 'all';
 
 export function setApiSemester(value) {
   currentSemester = value || 'all';

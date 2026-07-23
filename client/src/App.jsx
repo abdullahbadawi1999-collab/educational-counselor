@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom'
 import { FiMenu } from 'react-icons/fi'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
-import SemesterModal from './components/common/SemesterModal'
 import { useSemester } from './context/SemesterContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -20,7 +19,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => localStorage.getItem('auth') === 'true'
   )
-  const { selected, mustChoose } = useSemester()
+  const { selected, loading: semesterLoading } = useSemester()
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -60,8 +59,11 @@ function App() {
         minHeight: '100vh'
       }}>
         <TopBar />
-        {/* Remount routed content when the semester changes so pages refetch. */}
-        {!mustChoose && (
+        {/* Wait for the semester to resolve, then remount routed content when it
+            changes so pages refetch with the selected semester. */}
+        {semesterLoading ? (
+          <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>جاري التحميل...</div>
+        ) : (
           <div key={selected}>
             <Routes>
               <Route path="/" element={<DashboardPage />} />
@@ -76,8 +78,6 @@ function App() {
           </div>
         )}
       </main>
-
-      {mustChoose && <SemesterModal />}
 
       {toast && (
         <div className={`toast toast-${toast.type}`}>{toast.message}</div>

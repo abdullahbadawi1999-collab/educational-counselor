@@ -12,36 +12,33 @@ export function useSemester() {
 export function SemesterProvider({ children }) {
   const [semesters, setSemesters] = useState([])
   const [loading, setLoading] = useState(true)
-  // 'all' or a numeric id as string.
-  const [selected, setSelectedState] = useState(() => localStorage.getItem('selectedSemester') || 'all')
-  // Force the startup chooser once per browser session.
-  const [mustChoose, setMustChoose] = useState(() => sessionStorage.getItem('semesterChosen') !== 'true')
+  // 'all' or a numeric id as string. null until resolved on first load.
+  const [selected, setSelectedState] = useState(null)
 
   useEffect(() => {
-    setApiSemester(selected)
     api.get('/semesters')
-      .then(res => setSemesters(res.data || []))
-      .catch(() => setSemesters([]))
+      .then(res => {
+        const list = res.data || []
+        setSemesters(list)
+        // Default to the current semester (the one the user is working on now).
+        const current = list.find(s => s.is_current)
+        const initial = current ? String(current.id) : 'all'
+        setApiSemester(initial)
+        setSelectedState(initial)
+      })
+      .catch(() => { setApiSemester('all'); setSelectedState('all'); setSemesters([]) })
       .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const setSelected = useCallback((value) => {
     const v = value || 'all'
     setApiSemester(v)
-    localStorage.setItem('selectedSemester', v)
     setSelectedState(v)
   }, [])
 
-  const confirmChoice = useCallback((value) => {
-    setSelected(value)
-    sessionStorage.setItem('semesterChosen', 'true')
-    setMustChoose(false)
-  }, [setSelected])
-
-  const selectedSemester = selected === 'all'
-    ? null
-    : semesters.find(s => String(s.id) === String(selected)) || null
+  const selectedSemester = (selected && selected !== 'all')
+    ? semesters.find(s => String(s.id) === String(selected)) || null
+    : null
 
   const label = selected === 'all'
     ? 'كل الفصول الدراسية'
@@ -49,8 +46,7 @@ export function SemesterProvider({ children }) {
 
   return (
     <SemesterContext.Provider value={{
-      semesters, loading, selected, setSelected,
-      mustChoose, confirmChoice, selectedSemester, label,
+      semesters, loading, selected, setSelected, selectedSemester, label,
     }}>
       {children}
     </SemesterContext.Provider>
