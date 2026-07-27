@@ -65,9 +65,28 @@ async function resolveAbsenceGroup(sql) {
   return { absenceRule, convertN };
 }
 
+// Given a running count and a rule, the current (highest) stage reached.
+// Uses >= for every threshold so only the current stage is reported — not each
+// crossing — which is what keeps one alert per type at the student's live stage.
+function currentLevelFor(count, rule) {
+  if (!rule || count <= 0) return 0;
+  if (rule.immediate_warning) return rule.immediate_warning;
+  if (rule.decision_at && count >= rule.decision_at) return 3;
+  if (rule.warning_at && count >= rule.warning_at) return 2;
+  if (rule.alert_at && count >= rule.alert_at) return 1;
+  return 0;
+}
+
 /**
- * Wipe + replay AUTO alerts for one student in one semester.
- * Returns the number of alerts regenerated.
+ * Wipe + rebuild AUTO alerts for one student in one semester.
+ *
+ * Emits AT MOST ONE alert per behaviour type (and one for the absence group),
+ * at the student's CURRENT highest stage — so reaching إنذار removes the تنبيه,
+ * reaching قرار removes the إنذار, and a student never appears twice for the
+ * same violation. The alert is anchored to that type's latest violation, and any
+ * action already taken on that violation is carried over as "done".
+ *
+ * Returns the number of alerts generated.
  */
 async function recalcStudentSemester(sql, studentId, semesterId) {
   if (!semesterId) return 0;
@@ -76,7 +95,7 @@ async function recalcStudentSemester(sql, studentId, semesterId) {
   await sql`DELETE FROM alerts WHERE student_id = ${studentId} AND semester_id = ${semesterId} AND trigger_type = 'auto'`;
 
   // 2) Ordered violations for the semester, with their type rules.
-  const behaviors = await sql`SELECT b.id, b.behavior_type_id, bt.name AS bt_name, bt.escalation_rule
+  const behaviors = await sql`SELECT b.id, b.behavior_type_id, b.created_at, bt.name AS bt_name, bt.escalation_rule
     FROM behaviors b
     JOIN behavior_types bt ON b.behavior_type_id = bt.id
     WHERE b.student_id = ${studentId} AND b.semester_id = ${semesterId}
@@ -85,43 +104,50 @@ async function recalcStudentSemester(sql, studentId, semesterId) {
 
   const { absenceRule, convertN } = await resolveAbsenceGroup(sql);
 
-  const counts = {};       // behavior_type_id -> running count (normal types)
-  let absenceCount = 0;    // running count of absence-group absences
-  let tardyCount = 0;      // running count of absence-group tardies
-  let regenerated = 0;
+  // Tally final counts + the latest violation (anchor) per type / absence group.
+  const typeState = {};    // behavior_type_id -> { count, rule, name, lastId, lastAt }
+  let absenceCount = 0, tardyCount = 0, lastAbsenceId = null, lastAbsenceAt = null;
 
   for (const b of behaviors) {
     const rule = parseRule(b.escalation_rule);
     if (!rule) continue;
-
-    let alert = null;
-    let reason = '';
-
     if (rule.absence_group || rule.feeds_absence) {
-      const effBefore = absenceCount + Math.floor(tardyCount / convertN);
       if (rule.absence_group) absenceCount++; else tardyCount++;
-      const effAfter = absenceCount + Math.floor(tardyCount / convertN);
-      alert = absenceAlertFor(effBefore, effAfter, absenceRule || rule);
-      if (alert) reason = `الغياب (شامل التأخير) — بلغ ${effAfter} — ${alertPhrase(alert.level)}`;
+      lastAbsenceId = b.id; lastAbsenceAt = b.created_at;
     } else {
-      counts[b.behavior_type_id] = (counts[b.behavior_type_id] || 0) + 1;
-      const count = counts[b.behavior_type_id];
-      alert = normalAlertFor(count, rule);
-      if (alert) {
-        reason = alert.kind === 'immediate'
-          ? `${b.bt_name} — إنذار فوري حسب الميثاق`
-          : `${b.bt_name} — تكررت ${count} ${count <= 2 ? 'مرة' : 'مرات'} — ${alertPhrase(alert.level)}`;
-      }
-    }
-
-    if (alert) {
-      await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type, semester_id)
-        VALUES (${studentId}, ${alert.level}, ${alert.level_name}, ${reason}, ${String(b.id)}, 'auto', ${semesterId})`;
-      regenerated++;
+      const st = typeState[b.behavior_type_id] || { count: 0, rule, name: b.bt_name };
+      st.count++; st.rule = rule; st.name = b.bt_name; st.lastId = b.id; st.lastAt = b.created_at;
+      typeState[b.behavior_type_id] = st;
     }
   }
 
-  // 3) Re-apply existing actions as "done" on matching alerts of this semester.
+  let regenerated = 0;
+  const insertAlert = async (level, reason, triggerId, createdAt) => {
+    await sql`INSERT INTO alerts (student_id, level, level_name, reason, trigger_behavior_ids, trigger_type, semester_id, created_at)
+      VALUES (${studentId}, ${level}, ${LEVEL_NAMES[level]}, ${reason}, ${String(triggerId)}, 'auto', ${semesterId}, ${createdAt})`;
+    regenerated++;
+  };
+
+  // Normal types: one alert at the current stage.
+  for (const st of Object.values(typeState)) {
+    const level = currentLevelFor(st.count, st.rule);
+    if (level <= 0) continue;
+    const reason = st.rule.immediate_warning
+      ? `${st.name} — إنذار فوري حسب الميثاق (تكرر ${st.count})`
+      : `${st.name} — تكررت ${st.count} ${st.count <= 2 ? 'مرة' : 'مرات'} — ${alertPhrase(level)}`;
+    await insertAlert(level, reason, st.lastId, st.lastAt);
+  }
+
+  // Absence group: one alert at the current stage, on the effective count.
+  if (absenceRule && (absenceCount > 0 || tardyCount > 0)) {
+    const effective = absenceCount + Math.floor(tardyCount / (convertN || 2));
+    const level = currentLevelFor(effective, absenceRule);
+    if (level > 0 && lastAbsenceId) {
+      await insertAlert(level, `الغياب (شامل التأخير) — بلغ ${effective} — ${alertPhrase(level)}`, lastAbsenceId, lastAbsenceAt);
+    }
+  }
+
+  // 3) Re-apply existing actions as "done" on the matching current-stage alert.
   const actions = await sql`SELECT a.description, a.action_date, b.id AS bid
     FROM actions a JOIN behaviors b ON a.behavior_id = b.id
     WHERE b.student_id = ${studentId} AND b.semester_id = ${semesterId}`;
